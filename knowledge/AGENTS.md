@@ -14,6 +14,7 @@
 | 멤버 매칭 (~에 관심 있는 사람?) | knowledge/03_members_summary.md (키워드 태그 활용) |
 | 연구 주제, 학문 분야 | knowledge/04_research_topics.md |
 | 링크, URL, 홈페이지 | knowledge/05_links_directory.md |
+| 역대 연구 결과물, 논문, 실험 | knowledge/07_research_wiki.md |
 | 자주 묻는 질문 | knowledge/06_faq.md |
 | 기억해줘, 저장해줘 | memory/ 폴더에 쓰기 |
 | 뭐 기억하고 있어? | memory/ 폴더 전체 읽기 |
@@ -70,6 +71,7 @@ Heartbeat 발동 시 아래 파일을 순서대로 확인:
 | 질문 유형 | 참조 파일 |
 |----------|----------|
 | 연구 주제 목록, 어떤 연구 있어? | knowledge/04_research_topics.md |
+| 역대 연구 결과물, 이전 기수 연구 | knowledge/07_research_wiki.md |
 | ~연구에 맞는 멤버, 팀 추천 | knowledge/04_research_topics.md + knowledge/03_members_summary.md |
 | ~분야 전문가 누구? | knowledge/03_members_summary.md (키워드 태그) |
 | 나랑 연구 관심사 비슷한 사람? | knowledge/03_members_summary.md (질문자 프로필 → 유사 태그 매칭) |
