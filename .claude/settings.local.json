@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:www.gpters.org)",
+      "WebSearch",
+      "Bash(claude --version 2>/dev/null || echo \"not found\")",
+      "Bash(npm uninstall -g @anthropic-ai/claude-code)",
+      "Bash(bash /tmp/claude-install.sh)",
+      "Bash(aitk search:*)",
+      "Bash(aitk report-skip:*)",
+      "Bash(ssh:*)",
+      "Bash(chmod:*)",
+      "Bash(cd:*)",
+      "mcp__notion-fast-mcp__get_page",
+      "mcp__notion-fast-mcp__search_pages",
+      "Bash(python3:*)",
+      "WebFetch(domain:www.youtube.com)",
+      "WebFetch(domain:noembed.com)",
+      "Skill(bkit:plan-plus)",
+      "Bash(wc:*)",
+      "Bash(scp:*)",
+      "Skill(plan-plus)",
+      "Skill(pdca)",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "Bash(aitk get:*)",
+      "Bash(git init:*)"
+    ]
+  }
+}
