@@ -81,10 +81,10 @@ export function listLearnings() {
   try {
     const content = readFileSync(LEARNINGS_FILE, "utf8");
     const lines = content.split("\n").filter((l) => l.startsWith("- ["));
-    if (lines.length === 0) return "아직 학습된 오류가 없어!";
+    if (lines.length === 0) return "아직 학습된 오류가 없어요!";
     const recent = lines.slice(-10);
     return `📚 오류 학습 (${lines.length}건, 최근 10개)\n${recent.join("\n")}`;
   } catch {
-    return "아직 학습된 오류가 없어!";
+    return "아직 학습된 오류가 없어요!";
   }
 }

@@ -119,7 +119,7 @@ client.on(Events.MessageCreate, async (message) => {
       if (ref.author.id === client.user.id) {
         const content = `봇: "${ref.content.slice(0, 100)}" → 수정: ${message.content}`;
         recordLearning(content, displayName);
-        await message.reply("학습했어! 같은 실수 안 할게 ✅");
+        await message.reply("학습했어요! 같은 실수 안 할게요 ✅");
         return;
       }
     } catch {}
@@ -130,12 +130,22 @@ client.on(Events.MessageCreate, async (message) => {
   const nameCalled = NAME_PATTERN.test(message.content);
   if (!mentioned && !nameCalled) return;
 
+  // 봇 이름만 부르고 질문이 없는 경우 — AI 호출 없이 바로 응답
+  const stripped = message.content
+    .replace(/<@!?\d+>/g, "")         // 멘션 제거
+    .replace(/다오랑|오랑아?/g, "")    // 봇 이름 제거
+    .trim();
+  if (stripped.length < 2) {
+    await message.reply("네! 뭐 도와줄까요?");
+    return;
+  }
+
   // 프롬프트 인젝션 사전 차단 + 공격 로깅 (bbojjak #17 + #18)
   const injection = checkInjection(message.content);
   if (injection.blocked) {
     logAttack(message.author.id, displayName, message.channel.id, message.content, injection.label);
     await message.reply(
-      "나는 다오랩 안내 봇이라 그런 건 답변할 수 없어! 다오랩에 대해 궁금한 거 물어봐!"
+      "저는 다오랩 안내 봇이라 그런 건 답변할 수 없어요! 다오랩에 대해 궁금한 거 물어봐주세요!"
     );
     return;
   }

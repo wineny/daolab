@@ -5,6 +5,7 @@ import { webSearch, fetchUrl, extractUrls, needsSearch } from "./tools.mjs";
 import { loadMemoryContext } from "./memory.mjs";
 import { loadLearningsContext } from "./learnings.mjs";
 import { KNOWLEDGE_DIR } from "./config.mjs";
+import { seedThread as _seedThread, compressHistory, addToHistory } from "./chat-utils.mjs";
 
 // --- Load knowledge files ---
 function loadKnowledge() {
@@ -95,38 +96,13 @@ function ensureModel() {
 
 // --- Channel-based chat history ---
 const MAX_HISTORY = 40;
-const COMPRESS_THRESHOLD = 30;
-const COMPRESS_KEEP = 10;
 const channelHistories = new Map();
-
-function getHistory(channelId) {
-  if (!channelHistories.has(channelId)) channelHistories.set(channelId, []);
-  return channelHistories.get(channelId);
-}
 
 /**
  * 스레드 첫 메시지 시 부모 채널 최근 맥락 시딩 (bbojjak #15)
- * 스레드가 부모 채널 대화에서 분기된 맥락을 유지
  */
 export function seedThread(threadId, threadName, parentChannelId) {
-  if (channelHistories.has(threadId)) return; // 이미 히스토리 있음
-
-  const parentHistory = channelHistories.get(parentChannelId);
-  if (!parentHistory || parentHistory.length === 0) return;
-
-  // 부모 채널 최근 5개 메시지로 맥락 시딩
-  const recent = parentHistory
-    .slice(-5)
-    .map((h) => h.parts[0].text)
-    .join("\n");
-
-  channelHistories.set(threadId, [
-    {
-      role: "user",
-      parts: [{ text: `[스레드 "${threadName}" — 부모 채널 맥락]\n${recent}` }],
-    },
-  ]);
-  console.log(`[chat] Thread seeded: "${threadName}" ← parent #${parentChannelId}`);
+  _seedThread(threadId, threadName, parentChannelId, channelHistories);
 }
 
 /**
@@ -134,50 +110,7 @@ export function seedThread(threadId, threadName, parentChannelId) {
  * Called for ALL messages in the channel, not just bot-directed ones.
  */
 export function addContext(channelId, displayName, text) {
-  const history = getHistory(channelId);
-  history.push({ role: "user", parts: [{ text: `[${displayName}] ${text}` }] });
-  // Keep history bounded — remove oldest pair
-  if (history.length > MAX_HISTORY) {
-    history.splice(0, 1);
-  }
-}
-
-/**
- * 히스토리 30개 초과 시 오래된 대화를 요약으로 압축 (bbojjak 레슨 #16)
- */
-async function compressHistory(channelId) {
-  const history = getHistory(channelId);
-  if (history.length <= COMPRESS_THRESHOLD) return;
-
-  const m = ensureModel();
-  if (!m) return;
-
-  // 압축할 오래된 메시지 분리
-  const toCompress = history.splice(0, history.length - COMPRESS_KEEP);
-  const conversationText = toCompress
-    .map((h) => `${h.role === "model" ? "봇" : "멤버"}: ${h.parts[0].text}`)
-    .join("\n");
-
-  try {
-    const result = await m.generateContent(
-      `아래 디스코드 대화를 핵심 맥락 3줄로 요약해. 이름, 주요 화제, 결론만:\n\n${conversationText}`
-    );
-    const summary = result.response.text().trim();
-
-    // 요약을 히스토리 맨 앞에 삽입
-    history.unshift({
-      role: "user",
-      parts: [{ text: `[이전 대화 요약] ${summary}` }],
-    });
-
-    console.log(
-      `[chat] Compressed ${toCompress.length} msgs → summary for #${channelId}`
-    );
-  } catch (err) {
-    console.error("[chat] Compression failed:", err.message);
-    // 실패 시 원래 메시지 복원
-    history.unshift(...toCompress);
-  }
+  addToHistory(channelId, displayName, text, channelHistories, MAX_HISTORY);
 }
 
 // --- Gather extra context (web search, URL fetch) ---
@@ -195,7 +128,6 @@ async function gatherContext(text) {
 
   // 2. 검색이 필요한 질문이면 웹검색
   if (needsSearch(text) && urls.length === 0) {
-    // 검색 쿼리에서 봇 이름 제거
     const query = text.replace(/다오랑|오랑아?|@\S+/g, "").trim();
     if (query.length > 2) {
       const searchResult = await webSearch(query);
@@ -214,12 +146,12 @@ export async function chat(channelId, displayName, text) {
   if (!m) return null;
 
   // 히스토리 압축 (30개 초과 시)
-  await compressHistory(channelId);
+  await compressHistory(channelId, channelHistories, m);
 
   // Gather web search / URL context
   const extraContext = await gatherContext(text);
 
-  const history = getHistory(channelId);
+  const history = channelHistories.get(channelId) || [];
 
   try {
     const pastHistory = history.slice(0, -1);
@@ -246,7 +178,7 @@ export async function chat(channelId, displayName, text) {
     return reply;
   } catch (err) {
     console.error("[chat] Gemini error:", err.message);
-    return "앗, 지금 잠깐 답변이 어려워요. 다시 물어봐 주세요!";
+    return "앗, 지금 잠깐 답변이 어려워요. 다시 물어봐주세요!";
   }
 }
 

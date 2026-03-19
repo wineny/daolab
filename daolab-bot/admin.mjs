@@ -15,7 +15,7 @@ export async function handleAdmin(interaction) {
   // 관리자 검증 (최우선)
   if (interaction.user.id !== ADMIN_ID) {
     await interaction.reply({
-      content: "관리자 전용 명령어야! 🔒",
+      content: "관리자 전용 명령어예요! 🔒",
       ephemeral: true,
     });
     return;
@@ -47,7 +47,7 @@ export async function handleAdmin(interaction) {
       break;
     default:
       await interaction.reply({
-        content: "알 수 없는 명령어야!",
+        content: "알 수 없는 명령어예요!",
         ephemeral: true,
       });
   }

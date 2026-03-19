@@ -33,7 +33,7 @@ export function detect(message) {
   if (hasSensitiveInfo(text)) {
     return {
       detected: true,
-      response: "그건 민감한 정보라 저장하지 않는 게 좋겠어!",
+      response: "그건 민감한 정보라 저장하지 않는 게 좋겠어요!",
     };
   }
 
@@ -45,7 +45,7 @@ export function detect(message) {
   content = content.replace(/다오랑|오랑아?|@\S+/g, "").trim();
 
   if (!content) {
-    return { detected: true, response: "뭘 기억하면 될까? 내용을 함께 말해줘!" };
+    return { detected: true, response: "뭘 기억하면 될까요? 내용을 함께 말해주세요!" };
   }
 
   const displayName =
@@ -66,12 +66,12 @@ export function detect(message) {
     appendFileSync(resolve(MEMORY_DIR, targetFile), entry + "\n", "utf8");
   } catch (err) {
     console.error("[memory] Write failed:", err.message);
-    return { detected: true, response: "기억하려다 오류가 생겼어. 다시 시도해줘!" };
+    return { detected: true, response: "기억하려다 오류가 생겼어요. 다시 시도해주세요!" };
   }
 
   const summary = content.length > 50 ? content.slice(0, 50) + "..." : content;
   console.log(`[memory] Saved to ${targetFile}: ${entry}`);
-  return { detected: true, response: `기억했어! ✅ ${summary}` };
+  return { detected: true, response: `기억했어요! ✅ ${summary}` };
 }
 
 /**
@@ -99,7 +99,7 @@ export function list(category = null) {
     }
   }
 
-  return result.length > 0 ? result.join("\n") : "아직 저장된 기억이 없어!";
+  return result.length > 0 ? result.join("\n") : "아직 저장된 기억이 없어요!";
 }
 
 /**
@@ -121,7 +121,7 @@ export function search(keyword) {
   }
 
   if (allEntries.length === 0) {
-    return `"${keyword}" 관련 기억을 찾지 못했어!`;
+    return `"${keyword}" 관련 기억을 찾지 못했어요!`;
   }
 
   return `🔍 "${keyword}" 검색 결과 (${allEntries.length}건)\n${allEntries.join("\n")}`;
@@ -132,7 +132,7 @@ export function search(keyword) {
  */
 export function remove(keyword, userId) {
   if (userId !== ADMIN_ID) {
-    return { success: false, message: "지식 삭제는 관리자만 할 수 있어!" };
+    return { success: false, message: "지식 삭제는 관리자만 할 수 있어요!" };
   }
 
   let removed = 0;
@@ -155,8 +155,8 @@ export function remove(keyword, userId) {
   }
 
   return removed > 0
-    ? { success: true, message: `${removed}건 삭제했어!` }
-    : { success: false, message: `"${keyword}" 관련 항목을 찾지 못했어.` };
+    ? { success: true, message: `${removed}건 삭제했어요!` }
+    : { success: false, message: `"${keyword}" 관련 항목을 찾지 못했어요.` };
 }
 
 /**
