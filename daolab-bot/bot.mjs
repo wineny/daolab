@@ -2,6 +2,10 @@ import { Client, GatewayIntentBits, Collection, Events } from "discord.js";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { chat, addContext, isEnabled as isChatEnabled } from "./chat.mjs";
+import { restoreAll } from "./history.mjs";
+import { detect as detectMemory } from "./memory.mjs";
+import { start as startScheduler } from "./scheduler.mjs";
 
 // --- Load .env ---
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -77,10 +81,70 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+// --- Message handler (channel-aware context) ---
+const NAME_PATTERN = /다오랑|오랑/;
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+
+  const displayName =
+    message.member?.displayName || message.author.displayName;
+
+  // 모든 메시지를 채널 히스토리에 쌓음 (맥락 유지)
+  addContext(message.channel.id, displayName, message.content);
+
+  // "기억해줘" 패턴 감지 (멘션 없이도 작동)
+  const memResult = detectMemory(message);
+  if (memResult.detected && memResult.response) {
+    await message.reply(memResult.response);
+    // 기억하기만 하고 봇 호출이 아니면 여기서 종료
+    const mentionedForMem = message.mentions.has(client.user);
+    const nameCalledForMem = NAME_PATTERN.test(message.content);
+    if (!mentionedForMem && !nameCalledForMem) return;
+  }
+
+  // 봇 @멘션 또는 이름 호출 시에만 응답
+  const mentioned = message.mentions.has(client.user);
+  const nameCalled = NAME_PATTERN.test(message.content);
+  if (!mentioned && !nameCalled) return;
+
+  if (!isChatEnabled()) {
+    await message.reply("지금은 답변이 어려워요. 잠시 후에 다시 불러주세요!");
+    return;
+  }
+
+  try {
+    await message.channel.sendTyping();
+    const reply = await chat(
+      message.channel.id,
+      displayName,
+      message.content
+    );
+    if (reply) {
+      const trimmed =
+        reply.length > 1900 ? reply.slice(0, 1900) + "..." : reply;
+      await message.reply(trimmed);
+    }
+  } catch (err) {
+    console.error("[mention] Reply failed:", err.message);
+  }
+});
+
 // --- Ready ---
-client.once(Events.ClientReady, (c) => {
-  console.log(`[bot] Ready! Logged in as ${c.user.tag}`);
+client.once(Events.ClientReady, async (c) => {
+  console.log(`[bot] Ready! Logged in as ${c.user.tag} (다오랑/오랑)`);
   console.log(`[bot] Serving ${c.guilds.cache.size} guild(s)`);
+
+  // 히스토리 복원 (채널별 최근 메시지)
+  try {
+    const restored = await restoreAll(c, addContext);
+    console.log(`[bot] History restored: ${restored} messages`);
+  } catch (err) {
+    console.error("[bot] History restore failed:", err.message);
+  }
+
+  // Cron 스케줄러 시작
+  startScheduler(c);
 });
 
 // --- Graceful shutdown ---
