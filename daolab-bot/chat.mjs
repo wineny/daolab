@@ -1,19 +1,19 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { readFileSync, readdirSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { webSearch, fetchUrl, extractUrls, needsSearch } from "./tools.mjs";
 import { loadMemoryContext } from "./memory.mjs";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { loadLearningsContext } from "./learnings.mjs";
+import { KNOWLEDGE_DIR } from "./config.mjs";
 
 // --- Load knowledge files ---
 function loadKnowledge() {
-  const knowledgeDir = resolve(__dirname, "..", "knowledge");
   const files = {};
   try {
-    for (const f of readdirSync(knowledgeDir).filter((f) => f.endsWith(".md"))) {
-      files[f] = readFileSync(resolve(knowledgeDir, f), "utf8");
+    for (const f of readdirSync(KNOWLEDGE_DIR).filter((f) =>
+      f.endsWith(".md")
+    )) {
+      files[f] = readFileSync(resolve(KNOWLEDGE_DIR, f), "utf8");
     }
     console.log(`[chat] Loaded ${Object.keys(files).length} knowledge files`);
   } catch (err) {
@@ -48,8 +48,9 @@ function buildSystemInstruction() {
     .join("\n\n---\n\n");
 
   const memoryText = loadMemoryContext();
+  const learningsText = loadLearningsContext();
 
-  return [
+  const instruction = [
     soul,
     "",
     `## 현재 시간 정보`,
@@ -60,7 +61,12 @@ function buildSystemInstruction() {
     knowledgeText,
     "",
     memoryText,
+    "",
+    learningsText,
   ].join("\n");
+
+  console.log(`[chat] System prompt: ${instruction.length} chars`);
+  return instruction;
 }
 
 // --- Lazy-init Gemini ---
@@ -89,11 +95,38 @@ function ensureModel() {
 
 // --- Channel-based chat history ---
 const MAX_HISTORY = 40;
+const COMPRESS_THRESHOLD = 30;
+const COMPRESS_KEEP = 10;
 const channelHistories = new Map();
 
 function getHistory(channelId) {
   if (!channelHistories.has(channelId)) channelHistories.set(channelId, []);
   return channelHistories.get(channelId);
+}
+
+/**
+ * 스레드 첫 메시지 시 부모 채널 최근 맥락 시딩 (bbojjak #15)
+ * 스레드가 부모 채널 대화에서 분기된 맥락을 유지
+ */
+export function seedThread(threadId, threadName, parentChannelId) {
+  if (channelHistories.has(threadId)) return; // 이미 히스토리 있음
+
+  const parentHistory = channelHistories.get(parentChannelId);
+  if (!parentHistory || parentHistory.length === 0) return;
+
+  // 부모 채널 최근 5개 메시지로 맥락 시딩
+  const recent = parentHistory
+    .slice(-5)
+    .map((h) => h.parts[0].text)
+    .join("\n");
+
+  channelHistories.set(threadId, [
+    {
+      role: "user",
+      parts: [{ text: `[스레드 "${threadName}" — 부모 채널 맥락]\n${recent}` }],
+    },
+  ]);
+  console.log(`[chat] Thread seeded: "${threadName}" ← parent #${parentChannelId}`);
 }
 
 /**
@@ -106,6 +139,44 @@ export function addContext(channelId, displayName, text) {
   // Keep history bounded — remove oldest pair
   if (history.length > MAX_HISTORY) {
     history.splice(0, 1);
+  }
+}
+
+/**
+ * 히스토리 30개 초과 시 오래된 대화를 요약으로 압축 (bbojjak 레슨 #16)
+ */
+async function compressHistory(channelId) {
+  const history = getHistory(channelId);
+  if (history.length <= COMPRESS_THRESHOLD) return;
+
+  const m = ensureModel();
+  if (!m) return;
+
+  // 압축할 오래된 메시지 분리
+  const toCompress = history.splice(0, history.length - COMPRESS_KEEP);
+  const conversationText = toCompress
+    .map((h) => `${h.role === "model" ? "봇" : "멤버"}: ${h.parts[0].text}`)
+    .join("\n");
+
+  try {
+    const result = await m.generateContent(
+      `아래 디스코드 대화를 핵심 맥락 3줄로 요약해. 이름, 주요 화제, 결론만:\n\n${conversationText}`
+    );
+    const summary = result.response.text().trim();
+
+    // 요약을 히스토리 맨 앞에 삽입
+    history.unshift({
+      role: "user",
+      parts: [{ text: `[이전 대화 요약] ${summary}` }],
+    });
+
+    console.log(
+      `[chat] Compressed ${toCompress.length} msgs → summary for #${channelId}`
+    );
+  } catch (err) {
+    console.error("[chat] Compression failed:", err.message);
+    // 실패 시 원래 메시지 복원
+    history.unshift(...toCompress);
   }
 }
 
@@ -141,6 +212,9 @@ async function gatherContext(text) {
 export async function chat(channelId, displayName, text) {
   const m = ensureModel();
   if (!m) return null;
+
+  // 히스토리 압축 (30개 초과 시)
+  await compressHistory(channelId);
 
   // Gather web search / URL context
   const extraContext = await gatherContext(text);

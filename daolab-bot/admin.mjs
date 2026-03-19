@@ -1,9 +1,11 @@
 // --- Admin: 관리자 전용 기능 ---
 import * as memory from "./memory.mjs";
 import { reloadKnowledge, getHistorySize } from "./chat.mjs";
-import { weeklyDigest } from "./scheduler.mjs";
+import { weeklyDigest, heartbeat } from "./scheduler.mjs";
+import { listLearnings } from "./learnings.mjs";
+import { getSecurityStats } from "./security.mjs";
+import { ADMIN_ID } from "./config.mjs";
 
-const ADMIN_ID = "925580658917646397";
 const BOT_START_TIME = Date.now();
 
 /**
@@ -33,6 +35,15 @@ export async function handleAdmin(interaction) {
       break;
     case "digest":
       await handleDigest(interaction);
+      break;
+    case "learnings":
+      await handleLearnings(interaction);
+      break;
+    case "heartbeat":
+      await handleHeartbeat(interaction);
+      break;
+    case "security":
+      await handleSecurity(interaction);
       break;
     default:
       await interaction.reply({
@@ -72,6 +83,7 @@ async function handleStatus(interaction) {
     `- 서버: ${guilds}개`,
     `- 채널: ${channels}개`,
     `- 히스토리: ${historySize}개 메시지`,
+    `- 버전: v6 (threads + security-log + learnings + compression + heartbeat)`,
   ].join("\n");
 
   await interaction.reply({ content: status, ephemeral: true });
@@ -85,4 +97,46 @@ async function handleDigest(interaction) {
   } catch (err) {
     await interaction.editReply(`다이제스트 발송 실패: ${err.message}`);
   }
+}
+
+async function handleLearnings(interaction) {
+  const summary = listLearnings();
+  await interaction.reply({
+    content: summary.length > 1900 ? summary.slice(0, 1900) + "..." : summary,
+    ephemeral: true,
+  });
+}
+
+async function handleHeartbeat(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  try {
+    await heartbeat(interaction.client);
+    await interaction.editReply("Heartbeat 순찰 완료! ✅");
+  } catch (err) {
+    await interaction.editReply(`Heartbeat 실패: ${err.message}`);
+  }
+}
+
+async function handleSecurity(interaction) {
+  const stats = getSecurityStats();
+  const lines = [
+    "🛡️ **보안 현황**",
+    `- 총 차단: ${stats.total}건`,
+    `- 최근 24시간: ${stats.recent24h}건`,
+  ];
+
+  if (stats.last5.length > 0) {
+    lines.push("", "📋 **최근 기록**");
+    for (const entry of stats.last5) {
+      lines.push(entry);
+    }
+  } else {
+    lines.push("- 기록 없음 (공격 시도 0건)");
+  }
+
+  const msg = lines.join("\n");
+  await interaction.reply({
+    content: msg.length > 1900 ? msg.slice(0, 1900) + "..." : msg,
+    ephemeral: true,
+  });
 }

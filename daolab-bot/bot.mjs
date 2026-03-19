@@ -2,10 +2,12 @@ import { Client, GatewayIntentBits, Collection, Events } from "discord.js";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chat, addContext, isEnabled as isChatEnabled } from "./chat.mjs";
+import { chat, addContext, seedThread, isEnabled as isChatEnabled } from "./chat.mjs";
 import { restoreAll } from "./history.mjs";
 import { detect as detectMemory } from "./memory.mjs";
 import { start as startScheduler } from "./scheduler.mjs";
+import { checkInjection, logAttack } from "./security.mjs";
+import { detectFeedback, recordLearning } from "./learnings.mjs";
 
 // --- Load .env ---
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -90,6 +92,11 @@ client.on(Events.MessageCreate, async (message) => {
   const displayName =
     message.member?.displayName || message.author.displayName;
 
+  // 스레드 컨텍스트 시딩 — 첫 메시지 시 부모 채널 맥락 주입 (bbojjak #15)
+  if (message.channel.isThread?.()) {
+    seedThread(message.channel.id, message.channel.name, message.channel.parentId);
+  }
+
   // 모든 메시지를 채널 히스토리에 쌓음 (맥락 유지)
   addContext(message.channel.id, displayName, message.content);
 
@@ -103,10 +110,35 @@ client.on(Events.MessageCreate, async (message) => {
     if (!mentionedForMem && !nameCalledForMem) return;
   }
 
+  // 관리자 오류 피드백 감지 (봇 메시지에 대한 답글)
+  if (message.reference && detectFeedback(message).detected) {
+    try {
+      const ref = await message.channel.messages.fetch(
+        message.reference.messageId
+      );
+      if (ref.author.id === client.user.id) {
+        const content = `봇: "${ref.content.slice(0, 100)}" → 수정: ${message.content}`;
+        recordLearning(content, displayName);
+        await message.reply("학습했어! 같은 실수 안 할게 ✅");
+        return;
+      }
+    } catch {}
+  }
+
   // 봇 @멘션 또는 이름 호출 시에만 응답
   const mentioned = message.mentions.has(client.user);
   const nameCalled = NAME_PATTERN.test(message.content);
   if (!mentioned && !nameCalled) return;
+
+  // 프롬프트 인젝션 사전 차단 + 공격 로깅 (bbojjak #17 + #18)
+  const injection = checkInjection(message.content);
+  if (injection.blocked) {
+    logAttack(message.author.id, displayName, message.channel.id, message.content, injection.label);
+    await message.reply(
+      "나는 다오랩 안내 봇이라 그런 건 답변할 수 없어! 다오랩에 대해 궁금한 거 물어봐!"
+    );
+    return;
+  }
 
   if (!isChatEnabled()) {
     await message.reply("지금은 답변이 어려워요. 잠시 후에 다시 불러주세요!");

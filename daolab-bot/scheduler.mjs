@@ -1,14 +1,17 @@
-// --- Scheduler: Cron 기반 주간 다이제스트 + 모임 리마인더 ---
+// --- Scheduler: Cron 기반 주간 다이제스트 + 모임 리마인더 + Heartbeat 순찰 ---
 import cron from "node-cron";
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import {
+  MEMORY_DIR,
+  KNOWLEDGE_DIR,
+  PROGRAM_START,
+  getDigestChannelId,
+} from "./config.mjs";
+import { loadLearningsContext } from "./learnings.mjs";
+import { getSecurityStats } from "./security.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const SCHEDULE_PATH = resolve(__dirname, "..", "knowledge", "02_7gi_schedule.md");
-const MEMORY_DIR = resolve(__dirname, "memory");
-const DIGEST_CHANNEL_ID = "1484166024923316344";
-const PROGRAM_START = new Date("2026-03-10");
+const SCHEDULE_PATH = resolve(KNOWLEDGE_DIR, "02_7gi_schedule.md");
 
 /**
  * Cron 작업 등록 및 시작
@@ -37,8 +40,19 @@ export function start(client) {
     { timezone: "Asia/Seoul" }
   );
 
+  // Heartbeat 순찰: 6시간마다 (0:00, 6:00, 12:00, 18:00 KST)
+  cron.schedule(
+    "0 */6 * * *",
+    () => {
+      heartbeat(client).catch((err) =>
+        console.error("[scheduler] Heartbeat failed:", err.message)
+      );
+    },
+    { timezone: "Asia/Seoul" }
+  );
+
   console.log(
-    "[scheduler] Cron registered — digest: Mon 09:00 KST, reminder: Tue 09:00 KST"
+    "[scheduler] Cron registered — digest: Mon 09:00, reminder: Tue 09:00, heartbeat: every 6h"
   );
 }
 
@@ -46,7 +60,7 @@ export function start(client) {
  * 주간 다이제스트 생성 및 발송
  */
 export async function weeklyDigest(client) {
-  const channel = await client.channels.fetch(DIGEST_CHANNEL_ID);
+  const channel = await client.channels.fetch(getDigestChannelId());
   if (!channel) {
     console.error("[scheduler] Digest channel not found");
     return;
@@ -61,13 +75,8 @@ export async function weeklyDigest(client) {
   sunday.setDate(sunday.getDate() + 6);
   const dateRange = `${formatShort(monday)} ~ ${formatShort(sunday)}`;
 
-  // 스케줄에서 이번 주 일정 추출
   const weekEvents = parseWeekEvents(monday, sunday);
-
-  // memory/ 최근 항목 수집
   const memoryItems = getRecentMemoryItems(7);
-
-  // 주차별 맞춤 안내
   const weekTip = getWeekTip(weekNum);
 
   const lines = [
@@ -99,7 +108,9 @@ export async function weeklyDigest(client) {
   lines.push("궁금한 게 있으면 언제든 물어봐!");
 
   const message = lines.join("\n");
-  await channel.send(message.length > 1900 ? message.slice(0, 1900) + "..." : message);
+  await channel.send(
+    message.length > 1900 ? message.slice(0, 1900) + "..." : message
+  );
   console.log(`[scheduler] Weekly digest sent (week ${weekNum})`);
 }
 
@@ -107,14 +118,13 @@ export async function weeklyDigest(client) {
  * 모임 리마인더 발송
  */
 export async function meetingReminder(client) {
-  const channel = await client.channels.fetch(DIGEST_CHANNEL_ID);
+  const channel = await client.channels.fetch(getDigestChannelId());
   if (!channel) return;
 
   const now = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })
   );
   const todayStr = formatISO(now);
-
   const todayEvents = parseDayEvents(todayStr);
 
   if (todayEvents.length === 0) {
@@ -135,6 +145,70 @@ export async function meetingReminder(client) {
   console.log(`[scheduler] Meeting reminder sent for ${todayStr}`);
 }
 
+/**
+ * Heartbeat 순찰 (bbojjak 레슨 #09)
+ * 6시간마다 일정/메모리/learnings 확인 → 필요 시 알림
+ */
+export async function heartbeat(client) {
+  const channel = await client.channels.fetch(getDigestChannelId());
+  if (!channel) return;
+
+  const now = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })
+  );
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const alerts = [];
+
+  // 1. 24시간 이내 모임 확인
+  const todayEvents = parseDayEvents(formatISO(now));
+  const tomorrowEvents = parseDayEvents(formatISO(tomorrow));
+
+  if (todayEvents.length > 0) {
+    alerts.push(
+      `📢 오늘 모임이 있어요!\n${todayEvents.map((e) => `- ${e}`).join("\n")}`
+    );
+  }
+  if (tomorrowEvents.length > 0) {
+    alerts.push(
+      `📢 내일 모임이 있어요!\n${tomorrowEvents.map((e) => `- ${e}`).join("\n")}`
+    );
+  }
+
+  // 2. 최근 24시간 memory 변경 확인
+  const recentItems = getRecentMemoryItems(1);
+  if (recentItems.length > 0) {
+    alerts.push(`📝 최근 24시간 공유된 지식: ${recentItems.length}건`);
+  }
+
+  // 3. learnings 확인 (새 학습 기록 여부)
+  const learnings = loadLearningsContext();
+  if (learnings) {
+    const count = (learnings.match(/^- \[/gm) || []).length;
+    if (count > 0) {
+      alerts.push(`📚 누적 오류 학습: ${count}건`);
+    }
+  }
+
+  // 4. 보안 통계 (bbojjak #18)
+  const secStats = getSecurityStats();
+  if (secStats.recent24h > 0) {
+    alerts.push(`🛡️ 최근 24시간 인젝션 차단: ${secStats.recent24h}건`);
+  }
+
+  // 알림이 있을 때만 발송
+  if (alerts.length > 0) {
+    const message = `🔍 **다오랑 순찰 보고**\n\n${alerts.join("\n\n")}`;
+    await channel.send(
+      message.length > 1900 ? message.slice(0, 1900) + "..." : message
+    );
+    console.log(`[scheduler] Heartbeat: ${alerts.length} alerts sent`);
+  } else {
+    console.log("[scheduler] Heartbeat: all clear");
+  }
+}
+
 // --- 헬퍼 함수 ---
 
 function parseWeekEvents(monday, sunday) {
@@ -143,7 +217,6 @@ function parseWeekEvents(monday, sunday) {
     const lines = content.split("\n");
     const events = [];
 
-    // 테이블 행 파싱: "| 2026-03-24(화) | 19:30~22:00 | 조별 플랜 발표 | 오프라인 |"
     for (const line of lines) {
       const match = line.match(
         /\|\s*(\d{4}-\d{2}-\d{2})\([^)]+\)\s*\|\s*([^|]*)\|\s*([^|]*)\|\s*([^|]*)\|/
@@ -202,7 +275,8 @@ function parseDayEvents(todayStr) {
 }
 
 function getWeekTip(weekNum) {
-  if (weekNum <= 0) return "곧 7기가 시작돼요! 온보딩 퀘스트를 미리 확인해보세요";
+  if (weekNum <= 0)
+    return "곧 7기가 시작돼요! 온보딩 퀘스트를 미리 확인해보세요";
   if (weekNum <= 3)
     return "온보딩 기간이에요! 자기소개 슬라이드를 아직 안 했다면 지금 해보세요";
   if (weekNum <= 9)

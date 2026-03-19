@@ -1,11 +1,8 @@
 // --- Memory: 기억하기 기능 (파일 기반 영구 저장) ---
 import { readFileSync, appendFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const MEMORY_DIR = resolve(__dirname, "memory");
-const ADMIN_ID = "925580658917646397";
+import { resolve } from "node:path";
+import { MEMORY_DIR, ADMIN_ID } from "./config.mjs";
+import { hasSensitiveInfo } from "./security.mjs";
 
 const FILES = ["shared_links.md", "shared_knowledge.md", "shared_files.md"];
 
@@ -14,12 +11,6 @@ const SAVE_PATTERNS = [
   /이거\s?기억해/,
   /저장해\s?줘/,
   /메모해\s?줘/,
-];
-
-const SENSITIVE_PATTERNS = [
-  /\d{2,3}-\d{3,4}-\d{4}/, // 전화번호
-  /비밀번호|비번|패스워드|password/i,
-  /주민등록|주민번호/,
 ];
 
 // memory/ 디렉토리 보장
@@ -38,8 +29,8 @@ export function detect(message) {
     return { detected: false, response: null };
   }
 
-  // 민감정보 차단
-  if (SENSITIVE_PATTERNS.some((p) => p.test(text))) {
+  // 민감정보 차단 (security.mjs 확장 패턴 사용)
+  if (hasSensitiveInfo(text)) {
     return {
       detected: true,
       response: "그건 민감한 정보라 저장하지 않는 게 좋겠어!",
@@ -59,10 +50,6 @@ export function detect(message) {
 
   const displayName =
     message.member?.displayName || message.author.displayName;
-  const date = new Date()
-    .toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })
-    .replace(/\. /g, "-")
-    .replace(".", "");
   const isoDate = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" })
   )

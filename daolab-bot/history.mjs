@@ -53,8 +53,37 @@ export async function restoreAll(client, addContextFn, limit = 20) {
     }
   }
 
+  // Active thread 복원 (bbojjak #15 — 스레드별 분리 세션)
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      const { threads } = await guild.channels.fetchActiveThreads();
+      for (const thread of threads.values()) {
+        try {
+          const messages = await thread.messages.fetch({ limit });
+          const sorted = [...messages.values()].reverse();
+
+          for (const msg of sorted) {
+            if (msg.author.bot || !msg.content) continue;
+            const name = msg.member?.displayName || msg.author.displayName;
+            addContextFn(thread.id, name, msg.content);
+            restoredCount++;
+          }
+
+          channelCount++;
+          await sleep(100);
+        } catch (err) {
+          if (err.code !== 50001) {
+            console.warn(`[history] Skip thread #${thread.name}: ${err.message}`);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[history] Thread fetch failed: ${err.message}`);
+    }
+  }
+
   console.log(
-    `[history] Restored ${restoredCount} messages from ${channelCount} channels`
+    `[history] Restored ${restoredCount} messages from ${channelCount} channels+threads`
   );
   return restoredCount;
 }
