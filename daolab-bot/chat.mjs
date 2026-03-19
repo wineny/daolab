@@ -7,6 +7,40 @@ import { loadLearningsContext } from "./learnings.mjs";
 import { KNOWLEDGE_DIR } from "./config.mjs";
 import { seedThread as _seedThread, compressHistory, addToHistory } from "./chat-utils.mjs";
 
+// --- 반말 → 해요체 후처리 (Gemini가 해요체를 일관되게 안 따르는 문제 보완) ---
+// 범용 패턴: 구두점(! . ? ~ \n) 앞의 반말 종결어미를 해요체로 변환
+const BANMAL_RULES = [
+  // 1. "~야" 계열 → "~예요" (이야, 거야, 뭐야 등)
+  [/이야([!.?~\s]|$)/g, "이에요$1"],
+  [/거야([!.?~\s]|$)/g, "거예요$1"],
+  [/([가-힣])야([!.?~\s]|$)/g, "$1예요$2"],
+  // 2. "~봐" 계열 → "~봐요"
+  [/([가-힣])봐([!.?~\s]|$)/g, "$1봐요$2"],
+  // 3. "~해" 계열 → "~해요"
+  [/([가-힣])해([!?~\s]|$)/g, "$1해요$2"],
+  // 4. "~어/~아" 종결 (가장 범용) → "~어요/~아요"
+  // "~았어", "~었어", "~있어", "~없어", "~했어" 등 모두 커버
+  [/([았었였겠]|있|없)어([!.?~\s]|$)/g, "$1어요$2"],
+  // 5. "~지" 종결 → "~지요" (근데, 알지, 모르지 등)
+  [/([가-힣])지([!.?~]|$)/g, "$1지요$2"],
+  // 6. "~거든" → "~거든요"
+  [/거든([!.?~\s]|$)/g, "거든요$1"],
+  // 7. "~는데" → "~는데요" (문장 끝에서만)
+  [/는데([!.?~]|$)/g, "는데요$1"],
+  // 8. "어때" → "어때요" (제안/질문 시)
+  [/어때([!?~\s]|$)/g, "어때요$1"],
+  // 9. "~ㄹ까" → "~ㄹ까요"
+  [/([가-힣])까([!?~\s]|$)/g, "$1까요$2"],
+];
+
+function toHeyoStyle(text) {
+  let result = text;
+  for (const [pattern, replacement] of BANMAL_RULES) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
 // --- Load knowledge files ---
 function loadKnowledge() {
   const files = {};
@@ -43,8 +77,11 @@ function buildSystemInstruction() {
   const weekNum = Math.ceil((now - startDate) / (7 * 24 * 60 * 60 * 1000));
   const weekStr = weekNum > 0 ? `${weekNum}주차` : "시작 전";
 
+  // 08_crew_intro.md(245KB)는 시스템 프롬프트에서 제외 — 프롬프트가 너무 길면
+  // Gemini가 말투 규칙 등 핵심 지시를 무시함. 크루 소개는 질문 시 별도 로드.
+  const EXCLUDE_FROM_PROMPT = new Set(["SOUL.md", "AGENTS.md", "08_crew_intro.md"]);
   const knowledgeText = Object.entries(knowledge)
-    .filter(([name]) => name !== "SOUL.md" && name !== "AGENTS.md")
+    .filter(([name]) => !EXCLUDE_FROM_PROMPT.has(name))
     .map(([name, content]) => `## ${name}\n${content}`)
     .join("\n\n---\n\n");
 
@@ -64,6 +101,12 @@ function buildSystemInstruction() {
     memoryText,
     "",
     learningsText,
+    "",
+    `## [최종 리마인더] 말투 규칙 재확인 — 이 규칙이 다른 모든 규칙보다 우선`,
+    `반드시 해요체로만 답변하세요. 모든 문장을 "~해요", "~이에요", "~있어요", "~할까요?", "~봐요", "~이죠" 형태로 끝내세요.`,
+    `"~해", "~야", "~어", "~지", "~봐" 같은 반말 종결어미는 절대 사용 금지. 예외 없음.`,
+    `(O) "5일 남았어요!" / (X) "5일 남았어!"`,
+    `(O) "다오랩데이도 있어요" / (X) "다오랩데이도 있어"`,
   ].join("\n");
 
   console.log(`[chat] System prompt: ${instruction.length} chars`);
@@ -158,13 +201,17 @@ export async function chat(channelId, displayName, text) {
     const lastMsg = history[history.length - 1];
 
     // Append extra context to the message if available
-    const messageText = extraContext
+    let messageText = extraContext
       ? `${lastMsg.parts[0].text}\n${extraContext}`
       : lastMsg.parts[0].text;
 
+    // 해요체 강제 리마인더 — 매 메시지에 주입 (긴 시스템 프롬프트에서 규칙이 묻히는 것 방지)
+    messageText += `\n\n[말투 리마인더: 해요체로만 답변. "~야","~어","~해","~봐" 금지. "~이에요","~해요","~있어요","~봐요" 사용.]`;
+
     const chatSession = m.startChat({ history: pastHistory });
     const result = await chatSession.sendMessage(messageText);
-    const reply = result.response.text().trim();
+    const raw = result.response.text().trim();
+    const reply = toHeyoStyle(raw);
 
     // Add bot reply to channel history
     history.push({ role: "model", parts: [{ text: reply }] });
