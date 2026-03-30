@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAVE Survey v2.1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── trae Design Tokens ── */
+    :root {
+      --primary-50: #FDF1F0;
+      --primary-100: #FBE2E2;
+      --primary-200: #F8C5C4;
+      --primary-300: #F6A7A4;
+      --primary-400: #F38782;
+      --primary-500: #F2645C;
+      --primary-600: #D13A2D;
+      --primary-700: #9E291F;
+      --neutral-50: #fafafa;
+      --neutral-100: #f5f5f5;
+      --neutral-200: #e5e5e5;
+      --neutral-300: #d4d4d4;
+      --neutral-400: #a3a3a3;
+      --neutral-500: #737373;
+      --neutral-600: #525252;
+      --neutral-700: #404040;
+      --neutral-800: #262626;
+      --neutral-900: #171717;
+      --info-50: #eff6ff;
+      --info-100: #dbeafe;
+      --info-500: #3b82f6;
+      --info-600: #2563eb;
+      --success-50: #f0fdf4;
+      --success-500: #22c55e;
+      --success-600: #16a34a;
+      --warning-50: #fffbeb;
+      --warning-500: #f59e0b;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-xl: 14px;
+      --radius-2xl: 18px;
+      --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+      --easing-out: cubic-bezier(0, 0, 0.2, 1);
+      --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', -apple-system, sans-serif;
+      background: var(--neutral-50);
+      color: var(--neutral-800);
+      line-height: 1.65;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Background Pattern ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(242,100,92,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 85% 80%, rgba(59,130,246,0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .survey-container {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    /* ── Header ── */
+    .survey-header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeUp 0.6s var(--easing-out) both;
+    }
+
+    .survey-header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary-600);
+      letter-spacing: 0.02em;
+      margin-bottom: 16px;
+    }
+
+    .survey-header h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--neutral-900);
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    .survey-header h1 span {
+      color: var(--primary-500);
+    }
+
+    .survey-header p {
+      font-size: 14px;
+      color: var(--neutral-500);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── Progress ── */
+    .progress-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250,250,250,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px 0 12px;
+      margin: 0 -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+      animation: fadeUp 0.6s var(--easing-out) 0.1s both;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .progress-info .step-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--neutral-600);
+    }
+
+    .progress-info .step-count {
+      font-family: 'Sora', sans-serif;
+      font-size: 12px;
+      color: var(--neutral-400);
+      font-weight: 500;
+    }
+
+    .progress-track {
+      height: 4px;
+      background: var(--neutral-200);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-400), var(--primary-500));
+      border-radius: 999px;
+      transition: width 0.5s var(--easing-out);
+    }
+
+    /* ── Meta Info ── */
+    .meta-section {
+      background: white;
+      border: 1px solid var(--neutral-200);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      animation: fadeUp 0.6s var(--easing-out) 0.2s both;
+    }
+
+    .meta-section h3 {
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--neutral-700);
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .meta-grid.single { grid-template-columns: 1fr; }
+
+    .meta-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--neutral-400);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .meta-field input, .meta-field select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--neutral-200);
+      border-radius: var(--radius-md);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      color: var(--neutral-800);
+      background: var(--neutral-50);
+      transition: all 0.2s var(--easing-out);
+      outline: none;
+    }
+
+    .meta-field input:focus, .meta-field select:focus {
+      border-color: var(--primary-400);
+      box-shadow: 0 0 0 3px rgba(242,100,92,0.1);
+      background: white;
+    }
+
+    /* ── Part Divider ── */
+    .part-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 36px 0 8px;
+      animation: fadeUp 0.5s var(--easing-out) both;
+    }
+
+    .part-divider .part-tag {
+      font-family: 'Sora', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary-600);
+      background: var(--primary-50);
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .part-divider .part-line {
+      flex: 1;
+      height: 1px;
+      background: var(--neutral-200);
+    }
+
+    .part-description {
+      font-size: 13px;
+      color: var(--neutral-500);
+      margin-bottom: 20px;
+      padding-left: 2px;
+    }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: white;
+      border: 1px solid var(--neutral-200);
+      border-radius: var(--radius-xl);
+      padding: 28px 24px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s var(--easing-out);
+      animation: fadeUp 0.5s var(--easing-out) both;
+    }
+
+    .question-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--neutral-300);
+    }
+
+    .question-card.active {
+      border-color: var(--primary-300);
+      box-shadow: 0 0 0 3px rgba(242,100,92,0.08), var(--shadow-md);
+    }
+
+    .question-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--primary-500);
+      color: white;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+    }
+
+    .question-dimension {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--neutral-400);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .question-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--neutral-900);
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+
+    .question-hint {
+      font-size: 13px;
+      color: var(--neutral-400);
+      margin-bottom: 20px;
+    }
+
+    .question-explain {
+      font-size: 12px;
+      color: var(--neutral-400);
+      background: var(--neutral-50);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    .question-explain::before {
+      content: '💡 ';
+    }
+
+    /* ── Radio Options (Frequency) ── */
+    .freq-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .freq-option {
+      position: relative;
+    }
+
+    .freq-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .freq-option label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 8px;
+      border: 1.5px solid var(--neutral-200);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s var(--easing-out);
+      text-align: center;
+    }
+
+    .freq-option label .freq-value {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--neutral-700);
+      transition: color 0.2s;
+    }
+
+    .freq-option label .freq-label {
+      font-size: 11px;
+      color: var(--neutral-400);
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+
+    .freq-option label:hover {
+      border-color: var(--primary-300);
+      background: var(--primary-50);
+    }
+
+    .freq-option input:checked + label {
+      border-color: var(--primary-500);
+      background: var(--primary-50);
+      box-shadow: 0 0 0 3px rgba(242,100,92,0.1);
+    }
+
+    .freq-option input:checked + label .freq-value {
+      color: var(--primary-600);
+    }
+
+    .freq-option input:checked + label .freq-label {
+      color: var(--primary-500);
+    }
+
+    /* ── BARS Scale ── */
+    .bars-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .bars-item {
+      position: relative;
+    }
+
+    .bars-item input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .bars-item label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--neutral-200);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s var(--easing-out);
+    }
+
+    .bars-item label:hover {
+      border-color: var(--primary-300);
+      background: var(--primary-50);
+    }
+
+    .bars-item input:checked + label {
+      border-color: var(--primary-500);
+      background: var(--primary-50);
+      box-shadow: 0 0 0 3px rgba(242,100,92,0.1);
+    }
+
+    .bars-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      background: var(--neutral-100);
+      border-radius: var(--radius-sm);
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--neutral-500);
+      transition: all 0.2s;
+    }
+
+    .bars-item input:checked + label .bars-score {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .bars-desc {
+      font-size: 14px;
+      color: var(--neutral-600);
+      line-height: 1.5;
+      padding-top: 3px;
+    }
+
+    /* ── Reason Checkboxes ── */
+    .reason-group {
+      margin-bottom: 16px;
+    }
+
+    .reason-group .reason-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--neutral-600);
+      margin-bottom: 8px;
+    }
+
+    .reason-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .reason-item {
+      position: relative;
+    }
+
+    .reason-item input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .reason-item label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--neutral-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--neutral-600);
+      transition: all 0.2s var(--easing-out);
+    }
+
+    .reason-item label::before {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--neutral-300);
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: all 0.2s var(--easing-out);
+    }
+
+    .reason-item label:hover {
+      border-color: var(--primary-300);
+      background: var(--primary-50);
+    }
+
+    .reason-item input:checked + label {
+      border-color: var(--primary-400);
+      background: var(--primary-50);
+    }
+
+    .reason-item input:checked + label::before {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+    }
+
+    /* ── Text Anchor ── */
+    .text-anchor {
+      position: relative;
+    }
+
+    .text-anchor label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--neutral-400);
+      margin-bottom: 6px;
+    }
+
+    .text-anchor textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--neutral-200);
+      border-radius: var(--radius-md);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      color: var(--neutral-700);
+      background: var(--neutral-50);
+      resize: none;
+      height: 60px;
+      outline: none;
+      transition: all 0.2s var(--easing-out);
+      line-height: 1.5;
+    }
+
+    .text-anchor textarea::placeholder {
+      color: var(--neutral-300);
+    }
+
+    .text-anchor textarea:focus {
+      border-color: var(--primary-400);
+      box-shadow: 0 0 0 3px rgba(242,100,92,0.08);
+      background: white;
+    }
+
+    /* ── Footer ── */
+    .survey-footer {
+      text-align: center;
+      padding: 32px 0;
+      animation: fadeUp 0.5s var(--easing-out) 0.4s both;
+    }
+
+    .submit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 40px;
+      background: var(--primary-500);
+      color: white;
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s var(--easing-out);
+      box-shadow: var(--shadow-md);
+      letter-spacing: -0.01em;
+    }
+
+    .submit-btn:hover {
+      background: var(--primary-600);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--neutral-400);
+      line-height: 1.6;
+    }
+
+    .footer-credit {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--neutral-200);
+      font-size: 11px;
+      color: var(--neutral-300);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Stagger delays ── */
+    .question-card:nth-child(1) { animation-delay: 0.15s; }
+    .question-card:nth-child(2) { animation-delay: 0.2s; }
+    .question-card:nth-child(3) { animation-delay: 0.25s; }
+    .question-card:nth-child(4) { animation-delay: 0.3s; }
+    .question-card:nth-child(5) { animation-delay: 0.35s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .survey-container { padding: 20px 16px 60px; }
+      .survey-header h1 { font-size: 22px; }
+      .freq-options { grid-template-columns: repeat(2, 1fr); }
+      .meta-grid { grid-template-columns: 1fr; }
+      .question-card { padding: 20px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="survey-container">
+
+    <!-- Header -->
+    <header class="survey-header">
+      <div class="badge">CAVE v2.1 Survey</div>
+      <h1>AI Ops와 <span>자율조직</span></h1>
+      <p>AI가 관리 기능을 자동화하면, 조직은 더 자율적으로 되는가?</p>
+    </header>
+
+    <!-- Progress -->
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-info">
+        <span class="step-label" id="stepLabel">응답자 정보</span>
+        <span class="step-count" id="stepCount">0 / 8</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Meta -->
+    <div class="meta-section">
+      <h3>응답자 정보</h3>
+      <div class="meta-grid">
+        <div class="meta-field">
+          <label for="respondent">응답자</label>
+          <input type="text" id="respondent" placeholder="이름 또는 닉네임">
+        </div>
+        <div class="meta-field">
+          <label for="org">조직명</label>
+          <input type="text" id="org" placeholder="소속 조직">
+        </div>
+      </div>
+      <div class="meta-grid" style="margin-top: 12px">
+        <div class="meta-field">
+          <label for="date">날짜</label>
+          <input type="date" id="date">
+        </div>
+        <div class="meta-field">
+          <label for="phase">측정 시점</label>
+          <select id="phase">
+            <option value="" disabled selected>선택하세요</option>
+            <option value="before">Phase 1 (before)</option>
+            <option value="after">Phase 3 (after)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part A -->
+    <div class="part-divider">
+      <span class="part-tag">Part A</span>
+      <span class="part-line"></span>
+    </div>
+    <p class="part-description">지난 1주일을 떠올리며 해당하는 빈도에 체크해주세요. AI를 사용하지 않은 주라면 0회/0건을 선택해주세요.</p>
+
+    <!-- Q1: AI 활용 빈도 -->
+    <div class="question-card" data-q="1">
+      <div class="question-number">1</div>
+      <div class="question-dimension">AI 활용 빈도</div>
+      <div class="question-text">지난 1주일간, 업무에 AI 도구를 사용한 날은 며칠인가요?</div>
+      <div class="question-hint">종류 불문. 하루에 여러 번 써도 1일로 세주세요</div>
+      <div class="freq-options">
+        <div class="freq-option">
+          <input type="radio" name="q1" id="q1_0" value="0">
+          <label for="q1_0">
+            <span class="freq-value">0</span>
+            <span class="freq-label">안 씀</span>
+          </label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q1" id="q1_1" value="1-2">
+          <label for="q1_1">
+            <span class="freq-value">1-2</span>
+            <span class="freq-label">일</span>
+          </label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q1" id="q1_2" value="3-4">
+          <label for="q1_2">
+            <span class="freq-value">3-4</span>
+            <span class="freq-label">일</span>
+          </label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q1" id="q1_3" value="5+">
+          <label for="q1_3">
+            <span class="freq-value">매일</span>
+            <span class="freq-label"></span>
+          </label>
+        </div>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI를 얼마나 자주 쓰는지. 나머지 문항을 해석하는 기준이 됩니다.</div>
+    </div>
+
+    <!-- Q2: 의사결정 분산 -->
+    <div class="question-card" data-q="2">
+      <div class="question-number">2</div>
+      <div class="question-dimension">의사결정 분산</div>
+      <div class="question-text">지난 1주일간, 원래는 다른 사람에게 물어봤을 일인데 AI 정보를 바탕으로 혼자 결정한 적이 몇 번?</div>
+      <div class="question-hint">예: 이전엔 상사에게 확인받던 판단을 AI 분석 결과를 보고 직접 내림</div>
+      <div class="freq-options">
+        <div class="freq-option">
+          <input type="radio" name="q2" id="q2_0" value="0"><label for="q2_0"><span class="freq-value">0</span><span class="freq-label">없음</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q2" id="q2_1" value="1-2"><label for="q2_1"><span class="freq-value">1-2</span><span class="freq-label">회</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q2" id="q2_2" value="3-4"><label for="q2_2"><span class="freq-value">3-4</span><span class="freq-label">회</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q2" id="q2_3" value="5+"><label for="q2_3"><span class="freq-value">5+</span><span class="freq-label">회 이상</span></label>
+        </div>
+      </div>
+      <div class="text-anchor">
+        <label>구체적 사례 한 가지</label>
+        <textarea placeholder="어떤 결정이었는지 간단히 적어주세요"></textarea>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI 덕분에 다른 사람 없이 혼자 결정하는 일이 늘었는지.</div>
+    </div>
+
+    <!-- Q3: 자율적 실행 -->
+    <div class="question-card" data-q="3">
+      <div class="question-number">3</div>
+      <div class="question-dimension">자율적 실행</div>
+      <div class="question-text">지난 1주일간, 회사/팀의 정해진 방식이 아니라 본인만의 방식으로 AI를 활용한 적이 몇 번?</div>
+      <div class="question-hint">예: 팀에서 안 쓰는 AI 도구를 써봄, 자기만의 프롬프트 방식을 만듦, AI 활용 순서를 바꿔봄</div>
+      <div class="freq-options">
+        <div class="freq-option">
+          <input type="radio" name="q3" id="q3_0" value="0"><label for="q3_0"><span class="freq-value">0</span><span class="freq-label">없음</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q3" id="q3_1" value="1-2"><label for="q3_1"><span class="freq-value">1-2</span><span class="freq-label">회</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q3" id="q3_2" value="3-4"><label for="q3_2"><span class="freq-value">3-4</span><span class="freq-label">회</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q3" id="q3_3" value="5+"><label for="q3_3"><span class="freq-value">5+</span><span class="freq-label">회 이상</span></label>
+        </div>
+      </div>
+      <div class="text-anchor">
+        <label>어떤 상황이었는지</label>
+        <textarea placeholder="팀 방식과 다르게 해본 경험을 간단히 적어주세요"></textarea>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: 정해진 방식을 따르는 게 아니라 내 방식대로 AI를 활용하는지.</div>
+    </div>
+
+    <!-- Q4: AI 위임 허들 -->
+    <div class="question-card" data-q="4">
+      <div class="question-number">4</div>
+      <div class="question-dimension">AI 위임 허들</div>
+      <div class="question-text">지난 1주일간 직접 한 업무 중, "이건 AI가 해도 됐을 텐데" 하고 느낀 적이 몇 번인가요?</div>
+      <div class="question-hint"></div>
+      <div class="freq-options">
+        <div class="freq-option">
+          <input type="radio" name="q4" id="q4_0" value="0"><label for="q4_0"><span class="freq-value">0</span><span class="freq-label">없음</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q4" id="q4_1" value="1-2"><label for="q4_1"><span class="freq-value">1-2</span><span class="freq-label">회</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q4" id="q4_2" value="3-4"><label for="q4_2"><span class="freq-value">3-4</span><span class="freq-label">회</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q4" id="q4_3" value="5+"><label for="q4_3"><span class="freq-value">5+</span><span class="freq-label">회 이상</span></label>
+        </div>
+      </div>
+      <div class="reason-group">
+        <div class="reason-label">직접 한 주된 이유 (복수 선택 가능)</div>
+        <div class="reason-options">
+          <div class="reason-item">
+            <input type="checkbox" name="q4r" id="q4r_1" value="trust">
+            <label for="q4r_1">AI가 해낼 수 있을지 확신이 없어서</label>
+          </div>
+          <div class="reason-item">
+            <input type="checkbox" name="q4r" id="q4r_2" value="setup">
+            <label for="q4r_2">AI에 맡기는 과정(설정, 프롬프트 등)이 더 번거로워서</label>
+          </div>
+          <div class="reason-item">
+            <input type="checkbox" name="q4r" id="q4r_3" value="faster">
+            <label for="q4r_3">직접 하는 게 더 빠르거나 정확해서</label>
+          </div>
+          <div class="reason-item">
+            <input type="checkbox" name="q4r" id="q4r_4" value="policy">
+            <label for="q4r_4">조직 규정이나 정책상 AI 사용이 어려워서</label>
+          </div>
+          <div class="reason-item">
+            <input type="checkbox" name="q4r" id="q4r_5" value="habit">
+            <label for="q4r_5">그냥 평소 하던 대로 하게 되어서</label>
+          </div>
+        </div>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI에게 맡길 수 있었는데 안 맡긴 경험. 위임을 막는 장벽이 무엇인지.</div>
+    </div>
+
+    <!-- Q5: AI 위임 효과 -->
+    <div class="question-card" data-q="5">
+      <div class="question-number">5</div>
+      <div class="question-dimension">AI 위임 효과</div>
+      <div class="question-text">지난 1주일간, AI 덕분에 내가 직접 하지 않아도 된 업무는 몇 건인가요?</div>
+      <div class="question-hint">예: 이메일 초안 1건, 자료 정리 1건, 회의록 요약 1건 — 작은 업무도 1건으로 세주세요</div>
+      <div class="freq-options">
+        <div class="freq-option">
+          <input type="radio" name="q5" id="q5_0" value="0"><label for="q5_0"><span class="freq-value">0</span><span class="freq-label">없음</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q5" id="q5_1" value="1-2"><label for="q5_1"><span class="freq-value">1-2</span><span class="freq-label">건</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q5" id="q5_2" value="3-4"><label for="q5_2"><span class="freq-value">3-4</span><span class="freq-label">건</span></label>
+        </div>
+        <div class="freq-option">
+          <input type="radio" name="q5" id="q5_3" value="5+"><label for="q5_3"><span class="freq-value">5+</span><span class="freq-label">건 이상</span></label>
+        </div>
+      </div>
+      <div class="text-anchor">
+        <label>어떤 업무였는지</label>
+        <textarea placeholder="AI 덕분에 줄어든 업무를 간단히 적어주세요"></textarea>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI 덕분에 실제로 줄어든 업무가 있는지.</div>
+    </div>
+
+    <!-- Part B -->
+    <div class="part-divider" style="margin-top: 40px;">
+      <span class="part-tag">Part B</span>
+      <span class="part-line"></span>
+    </div>
+    <p class="part-description">각 문항의 행동 설명을 읽고, 본인 상황에 가장 가까운 점수를 선택해주세요.</p>
+
+    <!-- Q6: 자율성 인식 -->
+    <div class="question-card" data-q="6">
+      <div class="question-number">6</div>
+      <div class="question-dimension">자율성 인식 — 판단 범위 변화</div>
+      <div class="question-text">AI 도입 이후, 혼자서 판단을 내릴 수 있는 범위가 어떻게 변했나요?</div>
+      <div class="question-hint"></div>
+      <div class="bars-scale">
+        <div class="bars-item">
+          <input type="radio" name="q6" id="q6_1" value="1">
+          <label for="q6_1">
+            <span class="bars-score">1</span>
+            <span class="bars-desc">줄었음 — AI 도입 후 오히려 혼자 판단하는 일이 줄었다 (예: 승인/검토 절차 추가)</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q6" id="q6_2" value="2">
+          <label for="q6_2">
+            <span class="bars-score">2</span>
+            <span class="bars-desc">변화 없음 — AI 도입 전과 혼자 판단하는 범위가 비슷하다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q6" id="q6_3" value="3">
+          <label for="q6_3">
+            <span class="bars-score">3</span>
+            <span class="bars-desc">약간 늘었음 — 단순한 업무 1~2개에서 이전보다 빠르게 혼자 판단하게 됐다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q6" id="q6_4" value="4">
+          <label for="q6_4">
+            <span class="bars-score">4</span>
+            <span class="bars-desc">꽤 늘었음 — 이전에 다른 사람에게 물어봤던 결정을 이제 직접 내린다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q6" id="q6_5" value="5">
+          <label for="q6_5">
+            <span class="bars-score">5</span>
+            <span class="bars-desc">크게 늘었음 — 이전에는 못 했던 범위의 결정까지 혼자 내릴 수 있게 됐다</span>
+          </label>
+        </div>
+      </div>
+      <div class="text-anchor">
+        <label>위 점수를 준 이유 (구체적 사례)</label>
+        <textarea placeholder="점수를 선택한 이유를 간단히 적어주세요"></textarea>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI가 들어온 뒤, 내가 혼자 결정할 수 있는 범위가 넓어졌는지 좁아졌는지.</div>
+    </div>
+
+    <!-- Q7: 감시 인식 -->
+    <div class="question-card" data-q="7">
+      <div class="question-number">7</div>
+      <div class="question-dimension">감시 인식 — 업무 투명도 변화</div>
+      <div class="question-text">AI를 사용하면서, 내 업무 방식이나 성과가 다른 사람에게 더 잘 보이게 됐다고 느끼나요?</div>
+      <div class="question-hint"></div>
+      <div class="bars-scale">
+        <div class="bars-item">
+          <input type="radio" name="q7" id="q7_1" value="1">
+          <label for="q7_1">
+            <span class="bars-score">1</span>
+            <span class="bars-desc">전혀 — AI 사용 전후로 달라진 게 없다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q7" id="q7_2" value="2">
+          <label for="q7_2">
+            <span class="bars-score">2</span>
+            <span class="bars-desc">약간 — AI가 기록을 남기는 건 알지만 신경 쓰이지 않는다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q7" id="q7_3" value="3">
+          <label for="q7_3">
+            <span class="bars-score">3</span>
+            <span class="bars-desc">보통 — AI가 남긴 기록을 누가 볼지 가끔 생각한다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q7" id="q7_4" value="4">
+          <label for="q7_4">
+            <span class="bars-score">4</span>
+            <span class="bars-desc">꽤 — AI 기록 때문에 업무할 때 행동을 의식하게 된다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q7" id="q7_5" value="5">
+          <label for="q7_5">
+            <span class="bars-score">5</span>
+            <span class="bars-desc">많이 — AI 기록 때문에 업무 방식이나 속도를 조절하게 된다</span>
+          </label>
+        </div>
+      </div>
+      <div class="text-anchor">
+        <label>위 점수를 준 이유 (구체적 사례)</label>
+        <textarea placeholder="점수를 선택한 이유를 간단히 적어주세요"></textarea>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI 때문에 내 업무가 더 들여다보이게 됐는지, 그래서 행동이 달라졌는지. 정답은 없습니다.</div>
+    </div>
+
+    <!-- Q8: 정보 투명성 -->
+    <div class="question-card" data-q="8">
+      <div class="question-number">8</div>
+      <div class="question-dimension">정보 투명성 — AI 결과물의 근거 이해</div>
+      <div class="question-text">지난 1주일간 AI를 사용했을 때, AI 결과물이 왜 그렇게 나왔는지 대체로 이해할 수 있었나요?</div>
+      <div class="question-hint"></div>
+      <div class="bars-scale">
+        <div class="bars-item">
+          <input type="radio" name="q8" id="q8_1" value="1">
+          <label for="q8_1">
+            <span class="bars-score">1</span>
+            <span class="bars-desc">대부분 모르겠다 — AI가 왜 그런 결과를 냈는지 감이 안 온다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q8" id="q8_2" value="2">
+          <label for="q8_2">
+            <span class="bars-score">2</span>
+            <span class="bars-desc">가끔 이해된다 — 맞는 것 같기는 한데, 왜인지 설명하긴 어렵다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q8" id="q8_3" value="3">
+          <label for="q8_3">
+            <span class="bars-score">3</span>
+            <span class="bars-desc">반반이다 — 이해되는 경우도 있고, 모르겠는 경우도 있다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q8" id="q8_4" value="4">
+          <label for="q8_4">
+            <span class="bars-score">4</span>
+            <span class="bars-desc">대부분 이해된다 — AI가 어떤 정보를 바탕으로 결과를 냈는지 파악할 수 있다</span>
+          </label>
+        </div>
+        <div class="bars-item">
+          <input type="radio" name="q8" id="q8_5" value="5">
+          <label for="q8_5">
+            <span class="bars-score">5</span>
+            <span class="bars-desc">거의 다 이해된다 — 근거를 알고, 어떤 부분이 부정확한지도 구분할 수 있다</span>
+          </label>
+        </div>
+      </div>
+      <div class="text-anchor">
+        <label>위 점수를 준 이유 (구체적 사례)</label>
+        <textarea placeholder="점수를 선택한 이유를 간단히 적어주세요"></textarea>
+      </div>
+      <div class="question-explain">이 문항이 묻는 것: AI가 왜 그런 결과를 냈는지, 전반적으로 이해할 수 있는 정도.</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="survey-footer">
+      <button class="submit-btn" onclick="submitSurvey()">
+        응답 제출하기
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+      <div class="footer-note">
+        이 설문의 결과는 조직 단위로만 분석되며,<br>개인 식별 목적으로 사용되지 않습니다.
+      </div>
+      <div class="footer-credit">
+        CAVE v2.1 Survey &middot; 8문항 하이브리드 (빈도 5 + BARS 3) &middot; DaoLab 7기
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 👇 Google Apps Script 웹앱 URL을 여기에 붙여넣기
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyOsJzM3raBUijbAzboLK4WEiGX0Rj3wJB2R8wNo52AbJO4iMAcczB0jpNRZULyogh0/exec';
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // Auto-set today's date
+    document.getElementById('date').valueAsDate = new Date();
+
+    // Progress tracking
+    const totalQ = 8;
+
+    function updateProgress() {
+      let answered = 0;
+      for (let i = 1; i <= totalQ; i++) {
+        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        for (const r of radios) {
+          if (r.checked) { answered++; break; }
+        }
+      }
+      const pct = Math.round((answered / totalQ) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('stepCount').textContent = `${answered} / ${totalQ}`;
+      if (answered > 0 && answered <= totalQ) {
+        document.getElementById('stepLabel').textContent = `${answered}문항 완료`;
+      }
+      if (answered === totalQ) {
+        document.getElementById('stepLabel').textContent = '모든 문항 완료!';
+      }
+    }
+
+    // Active card highlight
+    document.querySelectorAll('.question-card').forEach(card => {
+      card.addEventListener('focusin', () => {
+        document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      });
+      card.addEventListener('change', updateProgress);
+    });
+
+    // Text anchor label mapping (index → question)
+    const textMap = { 0:'q2_사례', 1:'q3_상황', 2:'q5_업무', 3:'q6_이유', 4:'q7_이유', 5:'q8_이유' };
+
+    // Submit
+    async function submitSurvey() {
+      const respondent = document.getElementById('respondent').value.trim();
+      const org = document.getElementById('org').value.trim();
+      const phase = document.getElementById('phase').value;
+
+      if (!respondent || !org || !phase) {
+        alert('응답자 정보를 모두 입력해주세요.');
+        return;
+      }
+
+      let unanswered = [];
+      for (let i = 1; i <= totalQ; i++) {
+        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        let found = false;
+        for (const r of radios) { if (r.checked) { found = true; break; } }
+        if (!found) unanswered.push(`Q${i}`);
+      }
+
+      if (unanswered.length > 0) {
+        alert(`다음 문항에 응답해주세요: ${unanswered.join(', ')}`);
+        return;
+      }
+
+      // Collect responses
+      const data = { respondent, org, phase, date: document.getElementById('date').value };
+
+      for (let i = 1; i <= totalQ; i++) {
+        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        for (const r of radios) {
+          if (r.checked) { data[`q${i}`] = r.value; break; }
+        }
+      }
+
+      // Text anchors
+      document.querySelectorAll('.text-anchor textarea').forEach((ta, idx) => {
+        data[textMap[idx] || `text_${idx}`] = ta.value.trim();
+      });
+
+      // Q4 reasons
+      const reasons = [];
+      document.querySelectorAll('input[name="q4r"]:checked').forEach(cb => reasons.push(cb.value));
+      data.q4_reasons = reasons.join(', ');
+
+      // Submit button loading state
+      const btn = document.querySelector('.submit-btn');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px">전송 중...</span>';
+
+      // Send to Google Sheets
+      if (!GOOGLE_SCRIPT_URL) {
+        console.log('Survey Data:', JSON.stringify(data, null, 2));
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        alert('Google Script URL이 설정되지 않았습니다.\n콘솔에서 데이터를 확인해주세요.');
+        return;
+      }
+
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(data)
+        });
+
+        // Success UI
+        document.querySelector('.survey-container').innerHTML = `
+          <div style="text-align:center;padding:80px 20px;animation:fadeUp 0.6s cubic-bezier(0,0,0.2,1) both">
+            <div style="font-size:48px;margin-bottom:16px">✅</div>
+            <h2 style="font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:#171717;margin-bottom:8px">응답이 제출되었습니다</h2>
+            <p style="color:#737373;font-size:14px;margin-bottom:4px">${respondent}님, 감사합니다!</p>
+            <p style="color:#a3a3a3;font-size:13px">${org} · ${phase === 'before' ? 'Phase 1 (before)' : 'Phase 3 (after)'}</p>
+            <div style="margin-top:32px;padding:16px;background:#f0fdf4;border-radius:10px;font-size:13px;color:#16a34a">
+              데이터가 Google Sheets에 저장되었습니다
+            </div>
+            <div style="margin-top:24px;padding-top:24px;border-top:1px solid #e5e5e5;font-size:11px;color:#d4d4d4">
+              CAVE v2.1 Survey · DaoLab 7기
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        alert('전송 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
