@@ -1,10 +1,12 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-17T12:00:00.000Z",
+  "lastUpdated": "2026-03-30T06:24:40.374Z",
   "activeFeatures": [
     "daolab-bot",
     "daolab-bot-v2",
-    "daolab-bot-v3"
+    "daolab-bot-v3",
+    "tmp",
+    "docs"
   ],
   "primaryFeature": "daolab-bot-v3",
   "features": {
@@ -37,6 +39,32 @@
         "lastUpdated": "2026-03-17T12:00:00.000Z"
       },
       "lastFile": "/Users/wine_ny/side-project/daolab/docs/03-analysis/daolab-bot-v2.analysis.md"
+    },
+    "tmp": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-27T05:47:31.612Z",
+        "lastUpdated": "2026-03-27T07:02:16.685Z"
+      },
+      "lastFile": "/tmp/send-events-v3.ts"
+    },
+    "docs": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-30T06:24:40.374Z",
+        "lastUpdated": "2026-03-30T06:24:40.374Z"
+      },
+      "lastFile": "/Users/wine_ny/side-project/daolab/docs/cave-survey-apps-script.js"
     }
   },
   "pipeline": {
@@ -47,7 +75,7 @@
   "session": {
     "startedAt": "2026-03-15T00:17:33.309Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-17T12:00:00.000Z"
+    "lastActivity": "2026-03-30T06:24:40.374Z"
   },
   "history": [
     {
@@ -97,23 +125,47 @@
       "feature": "daolab-bot-v3",
       "phase": "completed",
       "action": "report generated, PDCA cycle complete"
+    },
+    {
+      "timestamp": "2026-03-27T05:47:31.612Z",
+      "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-27T06:11:08.574Z",
+      "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-27T07:02:16.685Z",
+      "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-30T06:24:40.374Z",
+      "feature": "docs",
+      "phase": "do",
+      "action": "updated"
     }
   ],
   "daolab-bot-v3": {
-      "phase": "completed",
-      "phaseNumber": 6,
-      "matchRate": 100,
-      "iterationCount": 0,
-      "requirements": [],
-      "documents": {
-        "plan": "/Users/wine_ny/side-project/daolab/docs/01-plan/features/daolab-bot-v3.plan.md",
-        "analysis": "/Users/wine_ny/side-project/daolab/docs/03-analysis/daolab-bot-v3.analysis.md",
-        "report": "/Users/wine_ny/side-project/daolab/docs/04-report/features/daolab-bot-v3.report.md"
-      },
-      "timestamps": {
-        "started": "2026-03-17T12:30:00.000Z",
-        "lastUpdated": "2026-03-17T15:00:00.000Z"
-      },
-      "lastFile": "/Users/wine_ny/side-project/daolab/docs/04-report/features/daolab-bot-v3.report.md"
-    }
+    "phase": "completed",
+    "phaseNumber": 6,
+    "matchRate": 100,
+    "iterationCount": 0,
+    "requirements": [],
+    "documents": {
+      "plan": "/Users/wine_ny/side-project/daolab/docs/01-plan/features/daolab-bot-v3.plan.md",
+      "analysis": "/Users/wine_ny/side-project/daolab/docs/03-analysis/daolab-bot-v3.analysis.md",
+      "report": "/Users/wine_ny/side-project/daolab/docs/04-report/features/daolab-bot-v3.report.md"
+    },
+    "timestamps": {
+      "started": "2026-03-17T12:30:00.000Z",
+      "lastUpdated": "2026-03-17T15:00:00.000Z"
+    },
+    "lastFile": "/Users/wine_ny/side-project/daolab/docs/04-report/features/daolab-bot-v3.report.md"
+  }
 }
