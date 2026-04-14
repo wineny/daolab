@@ -1194,6 +1194,7 @@ function selectScale(btn, name, value) {
 
 // Checkbox selection (max 2)
 function selectCheckbox(el) {
+  event.preventDefault();
   const input = el.querySelector('input[type="checkbox"]');
   if (!input) return;
 
@@ -1205,9 +1206,6 @@ function selectCheckbox(el) {
   const selectedCount = container.querySelectorAll('.checkbox-option.selected').length;
 
   if (!isSelected && selectedCount >= 2) {
-    // Shake animation hint
-    el.style.animation = 'none';
-    el.offsetHeight;
     return;
   }
 
