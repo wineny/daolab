@@ -19,7 +19,10 @@ function doPost(e) {
 
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
+    // form submit 방식: e.parameter.data에 JSON 문자열이 들어옴
+    // fetch 방식 fallback: e.postData.contents에 JSON이 들어옴
+    var raw = e.parameter && e.parameter.data ? e.parameter.data : e.postData.contents;
+    var data = JSON.parse(raw);
 
     // 헤더 자동 생성 (첫 응답 시)
     if (sheet.getLastRow() === 0) {

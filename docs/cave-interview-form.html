@@ -1331,17 +1331,35 @@ function submitForm() {
   };
 
   if (GOOGLE_SCRIPT_URL) {
-    fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(() => {
+    // Google Apps Script는 form submit + iframe이 가장 안정적
+    const iframe = document.createElement('iframe');
+    iframe.name = 'cave_submit_frame';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GOOGLE_SCRIPT_URL;
+    form.target = 'cave_submit_frame';
+
+    // payload를 하나의 hidden input (JSON)으로 전송
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+
+    // iframe 로드 완료 시 성공 처리
+    iframe.onload = () => {
       showSuccess();
-    }).catch(() => {
-      // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 처리
-      showSuccess();
-    });
+      setTimeout(() => iframe.remove(), 1000);
+    };
+    // fallback: 3초 후에도 onload 안 오면 성공 처리
+    setTimeout(() => showSuccess(), 3000);
   } else {
     // Google Script URL 미설정 시 로컬 모드 (복사만)
     console.log('Google Script URL not set. Data:', payload);
