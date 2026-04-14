@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAVE 중간점검 서면 인터뷰</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cave-black: #0a0a0c;
+  --cave-deep: #111118;
+  --cave-stone: #1a1a24;
+  --cave-slate: #252535;
+  --cave-mid: #3a3a4f;
+  --cave-light: #8888a0;
+  --cave-text: #c8c8d8;
+  --cave-bright: #e8e8f0;
+  --torch-warm: #e8a84c;
+  --torch-glow: #f0c060;
+  --torch-dim: #b07830;
+  --torch-ember: #d4944c;
+  --map-line: rgba(232, 168, 76, 0.12);
+  --danger-red: #c05050;
+  --success-green: #50a868;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cave-black);
+  color: var(--cave-text);
+  line-height: 1.7;
+  font-weight: 300;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Cave atmosphere background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232, 168, 76, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(176, 120, 48, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 80% 60%, rgba(212, 148, 76, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Topographic-like lines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, var(--map-line) 0px, var(--map-line) 1px, transparent 1px, transparent 80px),
+    repeating-linear-gradient(90deg, var(--map-line) 0px, var(--map-line) 1px, transparent 1px, transparent 80px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 56px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--cave-slate);
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  background: var(--torch-warm);
+  border-radius: 2px;
+}
+
+.badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--torch-warm);
+  border: 1px solid rgba(232, 168, 76, 0.3);
+  padding: 6px 16px;
+  border-radius: 2px;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-family: 'Pretendard Variable', Pretendard, sans-serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--cave-bright);
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.header .subtitle {
+  font-size: 15px;
+  color: var(--cave-light);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.header .meta {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--cave-light);
+}
+
+.header .meta span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--torch-dim);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Info panel (definitions) */
+.info-panel {
+  background: var(--cave-deep);
+  border: 1px solid var(--cave-slate);
+  border-radius: 8px;
+  margin-bottom: 48px;
+  overflow: hidden;
+}
+
+.info-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: none;
+  border: none;
+  color: var(--cave-bright);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.info-toggle:hover { background: rgba(232, 168, 76, 0.04); }
+
+.info-toggle .arrow {
+  font-size: 12px;
+  color: var(--torch-warm);
+  transition: transform 0.3s;
+}
+
+.info-toggle.open .arrow { transform: rotate(180deg); }
+
+.info-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.info-content.open { max-height: 2000px; }
+
+.info-inner {
+  padding: 0 24px 24px;
+}
+
+.info-inner h4 {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--torch-ember);
+  margin: 20px 0 10px;
+  letter-spacing: 0.5px;
+}
+
+.info-inner h4:first-child { margin-top: 0; }
+
+.def-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.def-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: var(--cave-stone);
+  color: var(--torch-warm);
+  font-weight: 500;
+  font-size: 12px;
+  border-bottom: 1px solid var(--cave-slate);
+}
+
+.def-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(37, 37, 53, 0.6);
+  color: var(--cave-text);
+  vertical-align: top;
+}
+
+.def-table tr:last-child td { border-bottom: none; }
+
+.info-note {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(232, 168, 76, 0.05);
+  border-left: 2px solid var(--torch-dim);
+  font-size: 12px;
+  color: var(--cave-light);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Progress */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--torch-dim), var(--torch-warm), var(--torch-glow));
+  z-index: 100;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 12px rgba(232, 168, 76, 0.4);
+}
+
+/* Question sections */
+.question {
+  margin-bottom: 48px;
+  padding: 32px;
+  background: var(--cave-deep);
+  border: 1px solid var(--cave-slate);
+  border-radius: 8px;
+  position: relative;
+  transition: border-color 0.3s;
+}
+
+.question:hover { border-color: var(--cave-mid); }
+
+.question.active { border-color: rgba(232, 168, 76, 0.3); }
+
+.q-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--torch-warm);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.q-number::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cave-slate);
+}
+
+.q-label {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--cave-bright);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.q-desc {
+  font-size: 13px;
+  color: var(--cave-light);
+  margin-bottom: 24px;
+}
+
+.q-phase1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cave-light);
+  padding: 8px 12px;
+  background: rgba(232, 168, 76, 0.04);
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.q-phase1::before {
+  content: '할리님의 사전 설문 결과';
+  color: var(--torch-dim);
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+/* Radio groups */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--cave-slate);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.radio-option:hover {
+  border-color: var(--cave-mid);
+  background: rgba(232, 168, 76, 0.02);
+}
+
+.radio-option.selected {
+  border-color: var(--torch-warm);
+  background: rgba(232, 168, 76, 0.06);
+}
+
+.radio-option input { display: none; }
+
+.radio-dot {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--cave-mid);
+  margin-top: 2px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.radio-option.selected .radio-dot {
+  border-color: var(--torch-warm);
+}
+
+.radio-option.selected .radio-dot::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--torch-warm);
+}
+
+.radio-label-wrap { flex: 1; }
+
+.radio-label {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--cave-bright);
+}
+
+.radio-desc {
+  font-size: 12px;
+  color: var(--cave-light);
+  margin-top: 2px;
+}
+
+/* Scale matrix */
+.scale-matrix { margin-top: 8px; }
+
+.scale-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(5, 48px);
+  align-items: center;
+  gap: 4px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(37, 37, 53, 0.6);
+}
+
+.scale-row:last-child { border-bottom: none; }
+
+.scale-dim {
+  font-size: 14px;
+  color: var(--cave-bright);
+  font-weight: 400;
+}
+
+.scale-dim small {
+  display: block;
+  font-size: 12px;
+  color: var(--cave-light);
+  font-weight: 300;
+  margin-top: 2px;
+}
+
+.scale-header {
+  display: grid;
+  grid-template-columns: 1fr repeat(5, 48px);
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cave-slate);
+}
+
+.scale-header span {
+  font-size: 10px;
+  text-align: center;
+  color: var(--cave-light);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.scale-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cave-slate);
+  background: none;
+  color: var(--cave-light);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+  justify-self: center;
+}
+
+.scale-btn:hover {
+  border-color: var(--cave-mid);
+  color: var(--cave-bright);
+}
+
+.scale-btn.selected {
+  border-color: var(--torch-warm);
+  background: rgba(232, 168, 76, 0.15);
+  color: var(--torch-glow);
+  font-weight: 500;
+}
+
+/* Checkbox group */
+.checkbox-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .checkbox-group { grid-template-columns: 1fr; }
+  .scale-row { grid-template-columns: 1fr repeat(5, 36px); }
+  .scale-header { grid-template-columns: 1fr repeat(5, 36px); }
+  .scale-btn { width: 32px; height: 32px; font-size: 12px; }
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--cave-slate);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checkbox-option:hover {
+  border-color: var(--cave-mid);
+  background: rgba(232, 168, 76, 0.02);
+}
+
+.checkbox-option.selected {
+  border-color: var(--torch-warm);
+  background: rgba(232, 168, 76, 0.06);
+}
+
+.checkbox-option.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.checkbox-option input { display: none; }
+
+.check-box {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border-radius: 3px;
+  border: 2px solid var(--cave-mid);
+  margin-top: 1px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-option.selected .check-box {
+  border-color: var(--torch-warm);
+  background: var(--torch-warm);
+}
+
+.checkbox-option.selected .check-box::after {
+  content: '\2713';
+  color: var(--cave-black);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.check-label {
+  font-size: 13px;
+  color: var(--cave-bright);
+}
+
+.check-desc {
+  font-size: 11px;
+  color: var(--cave-light);
+  margin-top: 1px;
+}
+
+.checkbox-option.full-width {
+  grid-column: 1 / -1;
+}
+
+.other-input {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--cave-mid);
+  color: var(--cave-bright);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  padding: 2px 0;
+  outline: none;
+  margin-top: 1px;
+}
+
+.other-input:focus { border-color: var(--torch-warm); }
+
+/* Two-column short inputs */
+.short-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .short-inputs { grid-template-columns: 1fr; }
+}
+
+.short-input-wrap label {
+  display: block;
+  font-size: 12px;
+  color: var(--cave-light);
+  margin-bottom: 6px;
+  font-weight: 400;
+}
+
+.short-input {
+  width: 100%;
+  background: var(--cave-stone);
+  border: 1px solid var(--cave-slate);
+  border-radius: 4px;
+  color: var(--cave-bright);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.short-input:focus { border-color: var(--torch-warm); }
+
+/* Textarea */
+.textarea-wrap { margin-top: 4px; }
+
+textarea {
+  width: 100%;
+  min-height: 100px;
+  background: var(--cave-stone);
+  border: 1px solid var(--cave-slate);
+  border-radius: 6px;
+  color: var(--cave-bright);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.7;
+  padding: 14px 18px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+textarea:focus { border-color: var(--torch-warm); }
+
+textarea::placeholder { color: var(--cave-mid); }
+
+/* Dropdown */
+.select-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+select {
+  width: 100%;
+  appearance: none;
+  background: var(--cave-stone);
+  border: 1px solid var(--cave-slate);
+  border-radius: 6px;
+  color: var(--cave-bright);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  padding: 12px 40px 12px 18px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+select:focus { border-color: var(--torch-warm); }
+
+.select-wrap::after {
+  content: '\25BE';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--torch-warm);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.dynamic-question {
+  padding: 16px 20px;
+  background: rgba(232, 168, 76, 0.04);
+  border-left: 2px solid var(--torch-warm);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--cave-bright);
+  line-height: 1.6;
+  display: none;
+}
+
+.dynamic-question.visible { display: block; }
+
+/* Case study callout */
+.case-study {
+  background: var(--cave-stone);
+  border-radius: 6px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.case-study .case {
+  margin-bottom: 12px;
+  padding-left: 16px;
+  border-left: 2px solid var(--cave-slate);
+}
+
+.case-study .case:last-child { margin-bottom: 0; }
+
+.case-study .case-label {
+  font-weight: 500;
+  color: var(--torch-ember);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.case-study .case.positive { border-color: var(--success-green); }
+.case-study .case.negative { border-color: var(--danger-red); }
+.case-study .case.positive .case-label { color: var(--success-green); }
+.case-study .case.negative .case-label { color: var(--danger-red); }
+
+/* Sub-label */
+.sub-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cave-bright);
+  margin-bottom: 12px;
+  margin-top: 24px;
+}
+
+.sub-label:first-of-type { margin-top: 0; }
+
+/* Submit area */
+.submit-area {
+  text-align: center;
+  padding-top: 16px;
+}
+
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 40px;
+  background: linear-gradient(135deg, var(--torch-dim), var(--torch-warm));
+  border: none;
+  border-radius: 6px;
+  color: var(--cave-black);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(232, 168, 76, 0.25);
+}
+
+.submit-btn:active { transform: translateY(0); }
+
+/* Success state */
+.success-message {
+  display: none;
+  text-align: center;
+  padding: 60px 24px;
+}
+
+.success-message.visible { display: block; }
+
+.success-message h2 {
+  font-family: 'Pretendard Variable', Pretendard, sans-serif;
+  font-size: 28px;
+  color: var(--cave-bright);
+  margin-bottom: 12px;
+}
+
+.success-message p {
+  color: var(--cave-light);
+  font-size: 15px;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 10px 24px;
+  background: var(--cave-stone);
+  border: 1px solid var(--cave-slate);
+  border-radius: 6px;
+  color: var(--cave-bright);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover { border-color: var(--torch-warm); }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding-top: 48px;
+  font-size: 11px;
+  color: var(--cave-mid);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.question { animation: fadeUp 0.5s ease both; }
+.question:nth-child(2) { animation-delay: 0.05s; }
+.question:nth-child(3) { animation-delay: 0.1s; }
+.question:nth-child(4) { animation-delay: 0.15s; }
+.question:nth-child(5) { animation-delay: 0.2s; }
+.question:nth-child(6) { animation-delay: 0.25s; }
+.question:nth-child(7) { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar" style="width: 0%"></div>
+
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <div class="badge">DaoLab 7th &middot; CAVE</div>
+    <h1>중간점검 서면 인터뷰</h1>
+    <p class="subtitle">각자의 실험 경험을 구조화된 형태로 모읍니다.<br>답변은 발표 슬라이드에 가명 또는 코드명으로 인용됩니다.</p>
+    <div class="meta">
+      <span>7문항</span>
+      <span>약 10분</span>
+      <span>마감 4/18 (금)</span>
+    </div>
+  </header>
+
+  <!-- Definitions (collapsible) -->
+  <div class="info-panel">
+    <button class="info-toggle" id="defToggle" onclick="toggleDefs()">
+      용어 정의 (답변 전에 확인해 주세요)
+      <span class="arrow">&#9660;</span>
+    </button>
+    <div class="info-content" id="defContent">
+      <div class="info-inner">
+        <h4>자율조직 (Self-Managing Organization)</h4>
+        <p style="font-size:13px; color:var(--cave-text); margin-bottom:12px;">
+          구성원이 외부의 지시나 관리자의 승인 없이 스스로 업무 목표·방식·일정을 결정하고 실행할 수 있는 조직 구조 및 문화. 아래 4개 차원으로 구성됩니다.
+        </p>
+        <table class="def-table">
+          <tr><th>차원</th><th>정의</th><th>쉽게 말하면</th></tr>
+          <tr><td>의사결정 분산</td><td>관리자 승인 없이 독립적으로 결정하는 범위</td><td>"뭘 할지 내가 정한다"</td></tr>
+          <tr><td>자율적 실행</td><td>방식·순서·일정을 스스로 결정하는 정도</td><td>"어떻게, 언제 할지 내가 정한다"</td></tr>
+          <tr><td>정보 투명성</td><td>AI 추천의 근거를 납득할 수 있는 정도</td><td>"AI가 왜 그렇게 했는지 이해된다"</td></tr>
+          <tr><td>구성원 인식</td><td>AI 도입이 자율성을 강화/약화했다는 인식</td><td>"더 자유로운가, 감시받는 느낌인가"</td></tr>
+        </table>
+        <div class="info-note">"자율조직 = 관리자가 없는 조직"이 아닙니다. 관리 기능은 존재하되 분산되어 있는가가 핵심입니다.</div>
+
+        <h4>AI Ops Pattern</h4>
+        <table class="def-table">
+          <tr><th>Pattern</th><th>명칭</th><th>설명</th><th>예시</th></tr>
+          <tr><td style="color:var(--torch-warm)">P0</td><td>미사용</td><td>AI 사용 안 함</td><td>수기 회의록, 엑셀</td></tr>
+          <tr><td style="color:var(--torch-warm)">P1</td><td>AI 보조</td><td>사람 주도, AI 단순 보조</td><td>ChatGPT 회의록 초안</td></tr>
+          <tr><td style="color:var(--torch-warm)">P2</td><td>AI 협업</td><td>AI 초안 + 사람 검토/수정</td><td>AI 주간보고서 → 검토 배포</td></tr>
+          <tr><td style="color:var(--torch-warm)">P3</td><td>AI 위임</td><td>AI 독립 수행, 사람은 예외 처리</td><td>AI 에이전트가 일정 관리</td></tr>
+          <tr><td style="color:var(--torch-warm)">P4</td><td>AI 자율</td><td>AI가 자율적으로 관리 수행</td><td>AI가 KPI·평가·자원배분</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form id="interviewForm">
+
+    <!-- Q1 -->
+    <div class="question" id="q1">
+      <div class="q-number">Q1</div>
+      <div class="q-label">우리 조직의 현재 위치</div>
+      <div class="q-desc">아래 두 항목을 골라 주세요.</div>
+
+      <div class="sub-label">(a) AI Ops Pattern <span style="font-weight:300; font-size:12px; color:var(--cave-light)">— 할리님이 공유해주신 설문에서 나온 결과를 그대로 선택해 주세요</span></div>
+      <div class="radio-group" data-name="q1a">
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1a" value="P0">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">P0 미사용</span>
+            <span class="radio-desc">AI 없이 수기/엑셀로 관리</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1a" value="P1">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">P1 AI 보조</span>
+            <span class="radio-desc">사람이 주도, AI가 단순 보조</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1a" value="P2">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">P2 AI 협업</span>
+            <span class="radio-desc">AI 초안 + 사람 검토/수정</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1a" value="P3">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">P3 AI 위임</span>
+            <span class="radio-desc">AI 독립 수행, 사람은 예외 처리</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1a" value="P4">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">P4 AI 자율</span>
+            <span class="radio-desc">AI가 KPI·평가·자원배분까지 수행</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="sub-label" style="margin-top:28px">(b) AI 도입 경로</div>
+      <div class="q-phase1">응답자 13명 중 Bottom-up 72%, Top-down 7%</div>
+      <div class="radio-group" data-name="q1b">
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1b" value="bottom-up">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">바텀업</span>
+            <span class="radio-desc">내가 또는 동료가 먼저 찾아서 쓰기 시작</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1b" value="middle">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">미들</span>
+            <span class="radio-desc">팀 리더나 관련 부서에서 권유/전파</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1b" value="top-down">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">탑다운</span>
+            <span class="radio-desc">경영진/상위 조직이 전사적으로 도입 결정</span>
+          </span>
+        </label>
+        <label class="radio-option" onclick="selectRadio(this)">
+          <input type="radio" name="q1b" value="mixed">
+          <span class="radio-dot"></span>
+          <span class="radio-label-wrap">
+            <span class="radio-label">혼합</span>
+            <span class="radio-desc">여러 경로가 동시에 작동</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="question" id="q2">
+      <div class="q-number">Q2</div>
+      <div class="q-label">자율성 변화 체감</div>
+      <div class="q-desc">Phase 1 설문 이후, AI 도입/실험을 통해 아래 4개 차원이 어떻게 변했는지 표시해 주세요.</div>
+      <div class="q-phase1">자율성 기준선 평균 4.33 / 감시 체감 3.3~3.5 / AI 기여 자율성 P1(3.11) → P3(4.50)</div>
+
+      <div class="scale-matrix">
+        <div class="scale-header">
+          <span></span>
+          <span>크게<br>감소</span>
+          <span>약간<br>감소</span>
+          <span>변화<br>없음</span>
+          <span>약간<br>증가</span>
+          <span>크게<br>증가</span>
+        </div>
+        <div class="scale-row" data-name="q2_decision">
+          <div class="scale-dim">의사결정 분산<small>내가 직접 결정하는 범위</small></div>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_decision', 1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_decision', 2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_decision', 3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_decision', 4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_decision', 5)">5</button>
+        </div>
+        <div class="scale-row" data-name="q2_execution">
+          <div class="scale-dim">자율적 실행<small>방식·순서·일정을 내가 정하는 정도</small></div>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_execution', 1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_execution', 2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_execution', 3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_execution', 4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_execution', 5)">5</button>
+        </div>
+        <div class="scale-row" data-name="q2_transparency">
+          <div class="scale-dim">정보 투명성<small>AI의 판단 근거를 납득하는 정도</small></div>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_transparency', 1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_transparency', 2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_transparency', 3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_transparency', 4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_transparency', 5)">5</button>
+        </div>
+        <div class="scale-row" data-name="q2_perception">
+          <div class="scale-dim">구성원 인식<small>감시(1) ↔ 자율 지원(5)</small></div>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_perception', 1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_perception', 2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_perception', 3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_perception', 4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale(this, 'q2_perception', 5)">5</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="question" id="q3">
+      <div class="q-number">Q3</div>
+      <div class="q-label">어떤 AI Ops를 시도했는가?</div>
+      <div class="q-desc">지난 2~3주간 조직에서 시도한 AI 활용/자동화를 설명해 주세요. (도구명, 적용 업무, 도입 방식 포함)</div>
+      <div class="textarea-wrap">
+        <textarea name="q3" placeholder="2~3문장으로 작성해 주세요" oninput="updateProgress()"></textarea>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="question" id="q4">
+      <div class="q-number">Q4</div>
+      <div class="q-label">자율성이 변한 순간</div>
+      <div class="q-desc">AI 도입 이후, "더 자율적으로 일하게 됐다" 또는 "오히려 자유가 줄었다"고 느낀 구체적 순간이 있나요?<br>없다면 "변화 없음"이라고 답하고 그 이유를 적어 주세요.</div>
+      <div class="textarea-wrap">
+        <textarea name="q4" placeholder="2~3문장으로 작성해 주세요" oninput="updateProgress()"></textarea>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="question" id="q5">
+      <div class="q-number">Q5</div>
+      <div class="q-label">자율성 강화의 조건</div>
+
+      <div class="sub-label">(a) 가장 중요한 것 2개를 골라 주세요</div>
+      <div class="checkbox-group" id="q5checkboxes">
+        <label class="checkbox-option" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="psychological-safety">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap">
+            <span class="check-label">심리적 안전감</span>
+            <span class="check-desc">잘못 써도 질책받지 않는 분위기</span>
+          </span>
+        </label>
+        <label class="checkbox-option" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="bottom-up">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap">
+            <span class="check-label">바텀업 도입</span>
+            <span class="check-desc">내가 선택해서 쓴다는 느낌</span>
+          </span>
+        </label>
+        <label class="checkbox-option" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="transparency">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap">
+            <span class="check-label">AI 판단의 투명성</span>
+            <span class="check-desc">왜 그렇게 했는지 이해 가능</span>
+          </span>
+        </label>
+        <label class="checkbox-option" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="leader-direction">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap">
+            <span class="check-label">리더의 방향 설계</span>
+            <span class="check-desc">"써라"가 아니라 "이 방향으로"</span>
+          </span>
+        </label>
+        <label class="checkbox-option" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="learning-time">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap">
+            <span class="check-label">충분한 학습 시간</span>
+            <span class="check-desc">핸즈온 경험을 가질 시간적 여유</span>
+          </span>
+        </label>
+        <label class="checkbox-option" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="role-clarity">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap">
+            <span class="check-label">명확한 역할 재정의</span>
+            <span class="check-desc">AI와 사람의 역할 합의</span>
+          </span>
+        </label>
+        <label class="checkbox-option full-width" onclick="selectCheckbox(this)">
+          <input type="checkbox" name="q5a" value="other">
+          <span class="check-box"></span>
+          <span class="radio-label-wrap" style="display:flex; align-items:center; gap:8px;">
+            <span class="check-label">기타:</span>
+            <input type="text" class="other-input" name="q5a_other" placeholder="직접 입력" onclick="event.stopPropagation()">
+          </span>
+        </label>
+      </div>
+
+      <div class="sub-label" style="margin-top:28px">(b) 걸림돌과 도움이 된 것</div>
+      <div class="short-inputs">
+        <div class="short-input-wrap">
+          <label>가장 큰 걸림돌</label>
+          <input type="text" class="short-input" name="q5b_block" placeholder="한 줄로 적어 주세요" oninput="updateProgress()">
+        </div>
+        <div class="short-input-wrap">
+          <label>가장 도움이 된 것</label>
+          <input type="text" class="short-input" name="q5b_help" placeholder="한 줄로 적어 주세요" oninput="updateProgress()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="question" id="q6">
+      <div class="q-number">Q6</div>
+      <div class="q-label">개인별 심화 질문</div>
+      <div class="q-desc">본인 이름을 선택하면 해당 질문이 표시됩니다.</div>
+
+      <div class="select-wrap">
+        <select id="q6Select" onchange="showPersonalQ()">
+          <option value="">이름을 선택해 주세요</option>
+          <option value="hally">할리</option>
+          <option value="jay">제이</option>
+          <option value="erin">에린</option>
+          <option value="nuri">누리</option>
+          <option value="chad">채드</option>
+        </select>
+      </div>
+
+      <div class="dynamic-question" id="dq-hally">
+        4개 팀의 AI 활용 패턴을 비교하면서, 적극적인 팀과 소극적인 팀의 가장 큰 차이는 무엇이었나요? 리더 스타일 때문인가요, 구성원의 자발성 때문인가요?
+      </div>
+      <div class="dynamic-question" id="dq-jay">
+        인터뷰한 AI Native 조직에서 관리자 없이도 운영되는 부분이 있었나요? 그 조직이 가진 조건(문화, 도구, 프로세스)은 무엇이었나요?
+      </div>
+      <div class="dynamic-question" id="dq-erin">
+        AI "보조→위임" 전환에서 가장 큰 심리적 허들은 무엇이었나요? "맡겨도 된다"고 느낀 전환점이 있었다면 설명해 주세요.
+      </div>
+      <div class="dynamic-question" id="dq-nuri">
+        슬랙 봇 19개 중 절반이 2주 만에 멈췄는데, 살아남은 봇의 자율성(스스로 판단하는 정도)과 주인의 개입 수준 사이의 관계를 어떻게 보나요?
+      </div>
+      <div class="dynamic-question" id="dq-chad">
+        AI로 정보 비대칭을 해소하려 할 때, 구성원이 실제로 더 자율적으로 판단하게 된 사례가 있나요? 정보만 늘고 행동은 안 바뀌었나요?
+      </div>
+
+      <div class="textarea-wrap">
+        <textarea name="q6" placeholder="이름을 선택한 후 2~3문장으로 작성해 주세요" oninput="updateProgress()"></textarea>
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="question" id="q7">
+      <div class="q-number">Q7</div>
+      <div class="q-label">한 줄 코멘트</div>
+      <div class="q-desc">이 연구나 실험에 대해 하고 싶은 말이 있다면 자유롭게 적어 주세요. (선택)</div>
+      <div class="textarea-wrap">
+        <textarea name="q7" placeholder="자유롭게 작성해 주세요 (선택)" style="min-height: 72px;" oninput="updateProgress()"></textarea>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area" id="submitArea">
+      <button type="button" class="submit-btn" onclick="submitForm()">
+        제출하기
+      </button>
+    </div>
+  </form>
+
+  <!-- Success -->
+  <div class="success-message" id="successMsg">
+    <h2>We go where the map ends</h2>
+    <p>답변이 저장되었습니다. 감사합니다!</p>
+    <button class="copy-btn" onclick="copyResults()">
+      답변 복사하기
+    </button>
+  </div>
+
+  <div class="footer">CAVE &mdash; Collective AI Ventures and Experiments</div>
+</div>
+
+<script>
+// ⚠️ Google Apps Script 웹 앱 URL을 여기에 붙여넣으세요
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwj2okkbqTGiLz6pSHDKA-ltfLs0vOI0ryyllYVKzsIWpzGfwYVq5VUSrKjJtBNBuAy/exec';
+
+// State
+const formData = {
+  q1a: null, q1b: null,
+  q2_decision: null, q2_execution: null, q2_transparency: null, q2_perception: null,
+  q3: '', q4: '',
+  q5a: [], q5a_other: '', q5b_block: '', q5b_help: '',
+  q6_name: '', q6: '',
+  q7: ''
+};
+
+// Toggle definitions
+function toggleDefs() {
+  const btn = document.getElementById('defToggle');
+  const content = document.getElementById('defContent');
+  btn.classList.toggle('open');
+  content.classList.toggle('open');
+}
+
+// Radio selection
+function selectRadio(el) {
+  const group = el.closest('.radio-group');
+  group.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const input = el.querySelector('input');
+  input.checked = true;
+  formData[input.name] = input.value;
+  updateProgress();
+}
+
+// Scale selection
+function selectScale(btn, name, value) {
+  const row = btn.closest('.scale-row');
+  row.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  formData[name] = value;
+  updateProgress();
+}
+
+// Checkbox selection (max 2)
+function selectCheckbox(el) {
+  const input = el.querySelector('input[type="checkbox"]');
+  if (!input) return;
+
+  // If clicking the "other" option's text input, don't toggle
+  if (event.target.classList.contains('other-input')) return;
+
+  const isSelected = el.classList.contains('selected');
+  const container = document.getElementById('q5checkboxes');
+  const selectedCount = container.querySelectorAll('.checkbox-option.selected').length;
+
+  if (!isSelected && selectedCount >= 2) {
+    // Shake animation hint
+    el.style.animation = 'none';
+    el.offsetHeight;
+    return;
+  }
+
+  el.classList.toggle('selected');
+  input.checked = !isSelected;
+
+  // Update disabled states
+  const newCount = container.querySelectorAll('.checkbox-option.selected').length;
+  container.querySelectorAll('.checkbox-option').forEach(opt => {
+    if (!opt.classList.contains('selected')) {
+      opt.classList.toggle('disabled', newCount >= 2);
+    }
+  });
+
+  // Update formData
+  formData.q5a = [];
+  container.querySelectorAll('.checkbox-option.selected input').forEach(i => {
+    formData.q5a.push(i.value);
+  });
+  updateProgress();
+}
+
+// Dropdown Q6
+function showPersonalQ() {
+  const select = document.getElementById('q6Select');
+  const value = select.value;
+  formData.q6_name = value;
+
+  document.querySelectorAll('.dynamic-question').forEach(dq => dq.classList.remove('visible'));
+  if (value) {
+    const dq = document.getElementById('dq-' + value);
+    if (dq) dq.classList.add('visible');
+  }
+  updateProgress();
+}
+
+// Progress bar
+function updateProgress() {
+  // Sync text fields
+  formData.q3 = document.querySelector('[name="q3"]').value;
+  formData.q4 = document.querySelector('[name="q4"]').value;
+  formData.q5b_block = document.querySelector('[name="q5b_block"]').value;
+  formData.q5b_help = document.querySelector('[name="q5b_help"]').value;
+  formData.q6 = document.querySelector('[name="q6"]').value;
+  formData.q7 = document.querySelector('[name="q7"]').value;
+
+  let filled = 0;
+  const total = 7;
+
+  if (formData.q1a && formData.q1b) filled++;
+  if (formData.q2_decision && formData.q2_execution && formData.q2_transparency && formData.q2_perception) filled++;
+  if (formData.q3.trim().length > 5) filled++;
+  if (formData.q4.trim().length > 5) filled++;
+  if (formData.q5a.length > 0 || formData.q5b_block.trim() || formData.q5b_help.trim()) filled++;
+  if (formData.q6_name && formData.q6.trim().length > 5) filled++;
+  if (formData.q7.trim().length > 0) filled += 1; else filled += 0.5; // Q7 is optional
+
+  const pct = Math.min(100, (filled / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+// Submit
+function submitForm() {
+  // Validate required fields
+  const missing = [];
+  if (!formData.q1a || !formData.q1b) missing.push('Q1');
+  if (!formData.q2_decision || !formData.q2_execution || !formData.q2_transparency || !formData.q2_perception) missing.push('Q2');
+  if (!formData.q3.trim()) missing.push('Q3');
+  if (!formData.q4.trim()) missing.push('Q4');
+  if (formData.q5a.length === 0 && !formData.q5b_block.trim() && !formData.q5b_help.trim()) missing.push('Q5');
+  if (!formData.q6_name || !formData.q6.trim()) missing.push('Q6');
+
+  if (missing.length > 0) {
+    alert('다음 문항을 완성해 주세요: ' + missing.join(', '));
+    const firstMissing = document.getElementById(missing[0].toLowerCase());
+    if (firstMissing) firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Prepare payload
+  const otherVal = document.querySelector('[name="q5a_other"]').value;
+  const nameMap = { hally: '할리', jay: '제이', erin: '에린', nuri: '누리', chad: '채드' };
+  const conditionMap = {
+    'psychological-safety': '심리적 안전감',
+    'bottom-up': '바텀업 도입',
+    'transparency': 'AI 판단의 투명성',
+    'leader-direction': '리더의 방향 설계',
+    'learning-time': '충분한 학습 시간',
+    'role-clarity': '명확한 역할 재정의',
+    'other': '기타'
+  };
+
+  const payload = {
+    name: nameMap[formData.q6_name] || formData.q6_name,
+    q1a: formData.q1a,
+    q1b: formData.q1b,
+    q2_decision: formData.q2_decision,
+    q2_execution: formData.q2_execution,
+    q2_transparency: formData.q2_transparency,
+    q2_perception: formData.q2_perception,
+    q3: formData.q3,
+    q4: formData.q4,
+    q5a: formData.q5a.map(v => v === 'other' ? '기타(' + otherVal + ')' : (conditionMap[v] || v)).join(', '),
+    q5a_other: otherVal,
+    q5b_block: formData.q5b_block,
+    q5b_help: formData.q5b_help,
+    q6: formData.q6,
+    q7: formData.q7
+  };
+
+  // Submit to Google Sheets
+  const submitBtn = document.querySelector('.submit-btn');
+  submitBtn.textContent = '제출 중...';
+  submitBtn.disabled = true;
+
+  const showSuccess = () => {
+    document.getElementById('interviewForm').style.display = 'none';
+    document.getElementById('submitArea').style.display = 'none';
+    const msg = document.getElementById('successMsg');
+    msg.classList.add('visible');
+    msg.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('progressBar').style.width = '100%';
+  };
+
+  if (GOOGLE_SCRIPT_URL) {
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(() => {
+      showSuccess();
+    }).catch(() => {
+      // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 처리
+      showSuccess();
+    });
+  } else {
+    // Google Script URL 미설정 시 로컬 모드 (복사만)
+    console.log('Google Script URL not set. Data:', payload);
+    showSuccess();
+  }
+}
+
+// Copy results
+function copyResults() {
+  const scaleLabels = { 1: '크게 감소', 2: '약간 감소', 3: '변화 없음', 4: '약간 증가', 5: '크게 증가' };
+  const nameMap = { hally: '할리', jay: '제이', erin: '에린', nuri: '누리', chad: '채드' };
+  const conditionMap = {
+    'psychological-safety': '심리적 안전감',
+    'bottom-up': '바텀업 도입',
+    'transparency': 'AI 판단의 투명성',
+    'leader-direction': '리더의 방향 설계',
+    'learning-time': '충분한 학습 시간',
+    'role-clarity': '명확한 역할 재정의',
+    'other': '기타'
+  };
+
+  const otherVal = document.querySelector('[name="q5a_other"]').value;
+
+  let text = `CAVE 중간점검 서면 인터뷰 — ${nameMap[formData.q6_name] || ''}\n`;
+  text += `${'='.repeat(50)}\n\n`;
+  text += `Q1. 현재 위치\n`;
+  text += `  (a) AI Ops Pattern: ${formData.q1a}\n`;
+  text += `  (b) 도입 경로: ${formData.q1b}\n\n`;
+  text += `Q2. 자율성 변화 체감\n`;
+  text += `  의사결정 분산: ${scaleLabels[formData.q2_decision]}\n`;
+  text += `  자율적 실행: ${scaleLabels[formData.q2_execution]}\n`;
+  text += `  정보 투명성: ${scaleLabels[formData.q2_transparency]}\n`;
+  text += `  구성원 인식: ${scaleLabels[formData.q2_perception]}\n\n`;
+  text += `Q3. AI Ops 시도\n  ${formData.q3}\n\n`;
+  text += `Q4. 자율성 변화 순간\n  ${formData.q4}\n\n`;
+  text += `Q5. 강화 조건\n`;
+  text += `  (a) 선택: ${formData.q5a.map(v => v === 'other' ? `기타(${otherVal})` : conditionMap[v]).join(', ')}\n`;
+  text += `  (b) 걸림돌: ${formData.q5b_block}\n`;
+  text += `      도움: ${formData.q5b_help}\n\n`;
+  text += `Q6. [${nameMap[formData.q6_name]}] 심화\n  ${formData.q6}\n\n`;
+  if (formData.q7.trim()) text += `Q7. 코멘트\n  ${formData.q7}\n`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '복사 완료!';
+    setTimeout(() => btn.textContent = '답변 복사하기', 2000);
+  });
+}
+
+// Init
+updateProgress();
+</script>
+</body>
+</html>
