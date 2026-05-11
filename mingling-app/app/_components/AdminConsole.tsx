@@ -31,7 +31,7 @@ function teamColor(team: number): string {
   return TEAM_COLORS[idx >= 0 ? idx : 0];
 }
 
-const POLL_MS = 1500;
+const POLL_MS = 3000;
 
 export function AdminConsole({ adminKey }: { adminKey: string }) {
   const [rows, setRows] = useState<Row[]>([]);
@@ -54,23 +54,26 @@ export function AdminConsole({ adminKey }: { adminKey: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    let requestId = 0;
+    let inFlight = false;
 
     async function load() {
-      const myId = ++requestId;
+      if (inFlight) return;
+      inFlight = true;
       try {
         const res = await fetch(
           `/api/participants?session_id=${encodeURIComponent(SESSION_ID)}`,
           { cache: "no-store" }
         );
-        if (cancelled || myId !== requestId) return;
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
           setRows((data.participants ?? []) as Row[]);
         }
+        setLoaded(true);
       } catch {
+        if (!cancelled) setLoaded(true);
       } finally {
-        if (!cancelled && myId === requestId) setLoaded(true);
+        inFlight = false;
       }
     }
 
