@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { clearSession } from "@/lib/sheets";
 import { SESSION_ID } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -18,7 +18,14 @@ export async function POST(req: NextRequest) {
       ? body.session_id
       : SESSION_ID;
 
-  const db = getDb();
-  db.prepare("DELETE FROM participants WHERE session_id = ?").run(sessionId);
-  return NextResponse.json({ ok: true });
+  try {
+    const result = await clearSession({
+      session_id: sessionId,
+      admin_key: expected,
+    });
+    return NextResponse.json({ ok: true, deleted: result.deleted });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "삭제 실패";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
 }

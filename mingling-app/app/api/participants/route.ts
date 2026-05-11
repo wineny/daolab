@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, type ParticipantRow } from "@/lib/db";
+import { listParticipants, submitParticipant } from "@/lib/sheets";
 import { SESSION_ID } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -7,16 +7,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id") || SESSION_ID;
-  const db = getDb();
-  const rows = db
-    .prepare(
-      `SELECT id, session_id, name, original_team, created_at, updated_at
-       FROM participants
-       WHERE session_id = ?
-       ORDER BY created_at ASC`
-    )
-    .all(sessionId) as ParticipantRow[];
-  return NextResponse.json({ participants: rows });
+  try {
+    const participants = await listParticipants(sessionId);
+    return NextResponse.json({ participants });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "조회 실패";
+    return NextResponse.json({ error: msg, participants: [] }, { status: 502 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -41,14 +38,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "조는 1~6" }, { status: 400 });
   }
 
-  const db = getDb();
-  db.prepare(
-    `INSERT INTO participants (session_id, name, original_team)
-     VALUES (?, ?, ?)
-     ON CONFLICT(session_id, name) DO UPDATE
-       SET original_team = excluded.original_team,
-           updated_at = datetime('now')`
-  ).run(sessionId, name, team);
-
-  return NextResponse.json({ ok: true });
+  try {
+    await submitParticipant({ session_id: sessionId, name, original_team: team });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "제출 실패";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
 }
