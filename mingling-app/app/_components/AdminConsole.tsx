@@ -8,6 +8,7 @@ import {
   type GroupingResult,
   type Participant,
 } from "@/lib/grouping";
+import { MinglingGuide } from "./MinglingGuide";
 
 type Row = {
   id: number;
@@ -37,7 +38,7 @@ export function AdminConsole({ adminKey }: { adminKey: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [result, setResult] = useState<GroupingResult | null>(null);
-  const [view, setView] = useState<"console" | "result">("console");
+  const [view, setView] = useState<"console" | "result" | "guide">("console");
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [participantUrl, setParticipantUrl] = useState<string>("");
 
@@ -101,7 +102,11 @@ export function AdminConsole({ adminKey }: { adminKey: string }) {
       name: r.name,
       original_team: r.original_team,
     }));
-    const r = formGroups(ppl, { trials: 300, seed: seedRef.current });
+    const r = formGroups(ppl, {
+      groupSize: 4,
+      trials: 300,
+      seed: seedRef.current,
+    });
     setResult(r);
     setView("result");
   }
@@ -114,7 +119,11 @@ export function AdminConsole({ adminKey }: { adminKey: string }) {
       name: r.name,
       original_team: r.original_team,
     }));
-    const r = formGroups(ppl, { trials: 300, seed: seedRef.current });
+    const r = formGroups(ppl, {
+      groupSize: 4,
+      trials: 300,
+      seed: seedRef.current,
+    });
     setResult(r);
   }
 
@@ -137,12 +146,17 @@ export function AdminConsole({ adminKey }: { adminKey: string }) {
     setView("console");
   }
 
+  if (view === "guide") {
+    return <MinglingGuide onExit={() => setView("result")} />;
+  }
+
   if (view === "result" && result) {
     return (
       <ResultView
         result={result}
         onBack={() => setView("console")}
         onReroll={reroll}
+        onStart={() => setView("guide")}
       />
     );
   }
@@ -262,10 +276,12 @@ function ResultView({
   result,
   onBack,
   onReroll,
+  onStart,
 }: {
   result: GroupingResult;
   onBack: () => void;
   onReroll: () => void;
+  onStart: () => void;
 }) {
   return (
     <main className="min-h-screen p-6 lg:p-10">
@@ -288,7 +304,7 @@ function ResultView({
               </p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={onBack}
               className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300"
@@ -297,9 +313,15 @@ function ResultView({
             </button>
             <button
               onClick={onReroll}
-              className="px-6 py-3 rounded-xl bg-white text-black font-bold"
+              className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300"
             >
               ↻ 다시 편성
+            </button>
+            <button
+              onClick={onStart}
+              className="px-6 py-3 rounded-xl bg-white text-black font-bold"
+            >
+              밍글링 시작 →
             </button>
           </div>
         </header>
